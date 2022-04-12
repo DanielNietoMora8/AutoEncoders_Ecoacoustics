@@ -1,8 +1,9 @@
 from inspect import isclass
 #import Models
-import sounddevice as sd
 import matplotlib.pyplot as plt
 import librosa
+import torch
+from torchvision.utils import make_grid
 from IPython.display import display, Audio
 
 
@@ -90,5 +91,26 @@ def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', 
     fig.savefig("try2", bbox_inches='tight',transparent=True, pad_inches=0.0)
 
 
+def test_vq_vae(model, iterator):
+    model.eval()
+    (valid_originals, _,_) = next( iterator)
+    valid_originals = torch.reshape(valid_originals, (valid_originals.shape[0] * valid_originals.shape[1],
+                                                  valid_originals.shape[2], valid_originals.shape[3]))
+    valid_originals = torch.unsqueeze(valid_originals,1)
 
+    valid_originals = valid_originals.to(device)
+
+    vq_output_eval = model._pre_vq_conv(model._encoder(valid_originals))
+    _, valid_quantize, _, _ = model._vq_vae(vq_output_eval)
+    valid_reconstructions = model._decoder(valid_quantize)
+    output = torch.cat((valid_originals[0:8], valid_reconstructions[0:8]), 0)
+    img_grid = make_grid(output, nrow=8, pad_value=20)
+
+    recon_error = F.mse_loss(valid_originals, valid_reconstructions)
+
+    fig, ax = plt.subplots(figsize=(20,5))
+    ax.imshow(img_grid[1, :, :].cpu(), vmin=0, vmax=1)
+    ax.axis("off")
+    plt.show()
+    return fig, recon_error
 
