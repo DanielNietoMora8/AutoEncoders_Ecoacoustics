@@ -28,6 +28,8 @@
 # print(record.shape)
 # record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
 # print(record.shape)
+
+
 import matplotlib.pyplot as plt
 import scipy.signal
 import torch
@@ -79,3 +81,4 @@ resized = cv2.resize(im, dim, interpolation=cv2.INTER_LINEAR)
 # cv2.destroyAllWindows()
 
 
+record.shape
