@@ -86,9 +86,8 @@ def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', 
     if xmax:
         axs.set_xlim((0, xmax))
     #fig.colorbar(im, ax=axs)
-    fig.savefig("try2")
     plt.show(block=False)
-    fig.savefig("try2", bbox_inches='tight',transparent=True, pad_inches=0.0)
+    fig.savefig("try2", bbox_inches='tight', transparent=True, pad_inches=0.0)
 
 
 def test_vq_vae(model, iterator):

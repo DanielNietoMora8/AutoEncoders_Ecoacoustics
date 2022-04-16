@@ -149,7 +149,7 @@ class EcoDataTesisReduced(Dataset):
         """
 
         path_index = self.files[index]
-        split_filename = str(path_index).split("\\")
+        split_filename = str(path_index).split("/")
         split_filename = split_filename[len(self.root_path.split("/")):]
         if split_filename[0] == 'Guajira_2016':
             serial = int(split_filename[2].split("_")[-1][2:])

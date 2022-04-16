@@ -69,8 +69,10 @@ sxx = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                         normalized=False,
                                         center=True)(record)
 
-plot_spectrogram(sxx[0, 0], "First_Try")
+fig = plot_spectrogram(sxx[0, 0], "First_Try")
 sd.play(record_2[0, 0, 0], 22050)
+
+plt.savefig('image.png', bbox_inches='tight', pad_inches=0)
 
 dim = (128, 128)
 

@@ -94,36 +94,46 @@ class ConvAE2(nn.Module):
 class VAE(nn.Module):
     def __init__(self, in_channels=1, num_hiddens: int = 64, zDim: int = 128):
         super(VAE, self).__init__()
-        self.featureDim = 64*30*30
+
         # Initializing the 2 convolutional layers and 2 full-connected layers for the encoder
+        self.zDim = zDim
         self.num_hiddens = num_hiddens
 
         self.encConv1 = nn.Conv2d(in_channels=in_channels,
-                                  out_channels=self.num_hiddens // 4,
+                                  out_channels=self.num_hiddens // 8,
                                   kernel_size=(4, 4),
                                   stride=(1, 1), padding=(0, 0))
-        self.encConv2 = nn.Conv2d(in_channels=self.num_hiddens // 4,
-                                  out_channels=self.num_hiddens // 2,
+        self.encConv2 = nn.Conv2d(in_channels=self.num_hiddens // 8,
+                                  out_channels=self.num_hiddens // 4,
                                   kernel_size=(4, 4),
                                   stride=(2, 2), padding=(0, 0))
-        self.encConv3 = nn.Conv2d(in_channels=self.num_hiddens // 2,
+        self.encConv3 = nn.Conv2d(in_channels=self.num_hiddens // 4,
+                                  out_channels=self.num_hiddens //2,
+                                  kernel_size=(4, 4),
+                                  stride=(2, 2), padding=(0, 0))
+
+        self.encConv4 = nn.Conv2d(in_channels=self.num_hiddens // 2,
                                   out_channels=self.num_hiddens,
                                   kernel_size=(4, 4),
                                   stride=(2, 2), padding=(0, 0))
-        self.encFC1 = nn.Linear(self.featureDim, zDim)
-        self.encFC2 = nn.Linear(self.featureDim, zDim)
 
         # Initializing the fully-connected layer and 2 convolutional layers for decoder
-        self.decFC1 = nn.Linear(zDim, self.featureDim)
+
         self.decConv1 = nn.ConvTranspose2d(in_channels=self.num_hiddens,
                                            out_channels=self.num_hiddens // 2,
                                            kernel_size=(4, 4),
                                            stride=(2, 2), padding=(0, 0))
+
         self.decConv2 = nn.ConvTranspose2d(in_channels=self.num_hiddens // 2,
                                            out_channels=self.num_hiddens // 4,
                                            kernel_size=(4, 4),
                                            stride=(2, 2), padding=(0, 0))
+
         self.decConv3 = nn.ConvTranspose2d(in_channels=self.num_hiddens // 4,
+                                           out_channels=self.num_hiddens // 8,
+                                           kernel_size=(4, 4),
+                                           stride=(2, 2), padding=(0, 0))
+        self.decConv4 = nn.ConvTranspose2d(in_channels=self.num_hiddens // 8,
                                            out_channels=in_channels,
                                            kernel_size=(4, 4),
                                            stride=(1, 1), padding=(0, 0))
@@ -139,7 +149,15 @@ class VAE(nn.Module):
         print(f"conv2: {x.shape}")
         x = F.relu(self.encConv3(x))
         print(f"conv3: {x.shape}")
-        x = x.view(-1, self.num_hiddens * 30 * 30)
+        x = F.relu(self.encConv4(x))
+        print(f"conv4: {x.shape}")
+
+        self.xshape = x.shape
+        self.featureDim = x.shape[1]*x.shape[2]*x.shape[3]
+        self.encFC1 = nn.Linear(self.featureDim, self.zDim)
+        self.encFC2 = nn.Linear(self.featureDim, self.zDim)
+        x = x.view(-1, self.featureDim)
+
         print(f"x.view: {x.shape}")
         mu = self.encFC1(x)
         logVar = self.encFC2(x)
@@ -154,12 +172,14 @@ class VAE(nn.Module):
     def decoder(self, z):
         # z is fed back into a fully-connected layers and then into two transpose convolutional layers
         # The generated output is the same size of the original input
+        self.decFC1 = nn.Linear(self.zDim, self.featureDim)
         x = F.relu(self.decFC1(z))
         print(f"decFC1: {x.shape}")
-        x = x.view(-1, self.num_hiddens, 30, 30)
+        x = x.view(-1, self.num_hiddens, self.xshape[2], self.xshape[3])
         x = F.relu(self.decConv1(x))
         x = F.relu(self.decConv2(x))
         x = F.relu(self.decConv3(x))
+        x = F.relu(self.decConv4(x))
         print(f"deconv2: {x.shape}")
         #x = torch.sigmoid(self.decConv2(x))
         return x
