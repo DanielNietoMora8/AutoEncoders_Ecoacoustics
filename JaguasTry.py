@@ -45,13 +45,13 @@ import cv2
 import librosa
 
 
-root_path = "G:/Unidades compartidas/ConservacionBiologicaIA/Datos/Jaguas_2018"
+root_path = "G:/Unidades compartidas/ConservacionBiologicaIA/Datos/Porce_2019"
 
 cuda = torch.device('cuda:0')
 torch.cuda.empty_cache()
 device = torch.device(cuda if torch.cuda.is_available() else "cpu")
 
-dataset = SoundscapeData(root_path=root_path, audio_length=1)
+dataset = SoundscapeData(root_path=root_path, audio_length=2)
 dataloader = DataLoader(dataset, batch_size=5)
 
 dataiter = iter(dataloader)
@@ -72,12 +72,12 @@ sxx = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
 fig = plot_spectrogram(sxx[0, 0], "First_Try")
 sd.play(record_2[0, 0, 0], 22050)
 
-plt.savefig('image.png', bbox_inches='tight', pad_inches=0)
-
-dim = (128, 128)
-
-im = cv2.imread("try2.png")
-resized = cv2.resize(im, dim, interpolation=cv2.INTER_LINEAR)
+# plt.savefig('image.png', bbox_inches='tight', pad_inches=0)
+#
+# dim = (128, 128)
+#
+# im = cv2.imread("try2.png")
+# resized = cv2.resize(im, dim, interpolation=cv2.INTER_LINEAR)
 # cv2.imshow("re", resized)
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()

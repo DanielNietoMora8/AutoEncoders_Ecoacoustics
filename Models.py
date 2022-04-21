@@ -103,10 +103,12 @@ class VAE(nn.Module):
                                   out_channels=self.num_hiddens // 8,
                                   kernel_size=(4, 4),
                                   stride=(1, 1), padding=(0, 0))
+
         self.encConv2 = nn.Conv2d(in_channels=self.num_hiddens // 8,
                                   out_channels=self.num_hiddens // 4,
                                   kernel_size=(4, 4),
                                   stride=(2, 2), padding=(0, 0))
+
         self.encConv3 = nn.Conv2d(in_channels=self.num_hiddens // 4,
                                   out_channels=self.num_hiddens //2,
                                   kernel_size=(4, 4),
@@ -133,6 +135,7 @@ class VAE(nn.Module):
                                            out_channels=self.num_hiddens // 8,
                                            kernel_size=(4, 4),
                                            stride=(2, 2), padding=(0, 0))
+
         self.decConv4 = nn.ConvTranspose2d(in_channels=self.num_hiddens // 8,
                                            out_channels=in_channels,
                                            kernel_size=(4, 4),
@@ -202,41 +205,49 @@ class Encoder(nn.Module):
                                  kernel_size=(4, 4),
                                  stride=(1, 1), padding=(0, 0))
         self._conv_2 = nn.Conv2d(in_channels=num_hiddens // 4,
-                                 out_channels=num_hiddens // 2,
+                                 out_channels=num_hiddens,
                                  kernel_size=(4, 4),
                                  stride=(2, 2), padding=(0, 0))
         # self._conv_3 = nn.Conv2d(in_channels=num_hiddens // 4,
         #                          out_channels=num_hiddens // 2,
         #                          kernel_size=(4, 4),
         #                          stride=(2, 2), padding=(0, 0))
-        self._conv_4 = nn.Conv2d(in_channels=num_hiddens // 2,
-                                 out_channels=num_hiddens,
-                                 kernel_size=(4, 4),
-                                 stride=(2, 2), padding=(0, 0))
+        # self._conv_4 = nn.Conv2d(in_channels=num_hiddens // 2,
+        #                          out_channels=num_hiddens,
+        #                          kernel_size=(4, 4),
+        #                          stride=(2, 2), padding=(0, 0))
         # self._residual_stack = ResidualStack(in_channels=num_hiddens,
         #                                      num_hiddens=num_hiddens,
         #                                      num_residual_layers=num_residual_layers,
         #                                      num_residual_hiddens=num_residual_hiddens)
 
+        self.pooling = nn.MaxPool2d(2)
+
     def forward(self, inputs):
 
         # print("Working with new encoder")
-        # print(f"inputs:{inputs.shape}")
+        print(f"inputs:{inputs.shape}")
         x = self._conv_1(inputs)
-        x = F.relu(x)
-        # print(f"conv1: {x.shape}")
+        x = F.leaky_relu(x)
+        print(f"conv1: {x.shape}")
+
+        # x = self.pooling(x)
+        # print(f"pooling1: {x.shape}")
 
         x = self._conv_2(x)
-        x = F.relu(x)
-        # print(f"conv2: {x.shape}")
+        x = F.leaky_relu(x)
+        print(f"conv2: {x.shape}")
+
+        # x = self.pooling(x)
+        # print(f"pooling2: {x.shape}")
 
         # x = self._conv_3(x)
         # x = F.relu(x)
         # # print(f"conv3: {x.shape}")
 
-        x = self._conv_4(x)
-        x = F.relu(x)
-        # print(f"conv4: {x.shape}")
+        # x = self._conv_4(x)
+        # x = F.relu(x)
+        # # print(f"conv4: {x.shape}")
 
         return x
 
@@ -263,17 +274,17 @@ class Decoder(nn.Module):
         self._conv_trans_2 = nn.ConvTranspose2d(in_channels=embedding_dim,
                                                 out_channels=num_hiddens,
                                                 kernel_size=(4, 4),
-                                                stride=(2, 2), padding=(0, 0))
+                                                stride=(2, 2), padding=(0, 0), output_padding=(0, 0))
 
         self._conv_trans_3 = nn.ConvTranspose2d(in_channels=num_hiddens,
-                                                out_channels=num_hiddens // 2,
+                                                out_channels=num_hiddens // 4,
                                                 kernel_size=(4, 4),
                                                 stride=(2, 2), padding=(0, 0),  output_padding=(0, 0))
 
-        self._conv_trans_4 = nn.ConvTranspose2d(in_channels=num_hiddens // 2,
-                                                out_channels=num_hiddens // 4,
-                                                kernel_size=(4, 4),
-                                                stride=(2, 2), padding=(0, 0), output_padding=(0, 0))
+        # self._conv_trans_4 = nn.ConvTranspose2d(in_channels=num_hiddens // 2,
+        #                                         out_channels=num_hiddens // 4,
+        #                                         kernel_size=(4, 4),
+        #                                         stride=(2, 2), padding=(0, 0), output_padding=(0, 0))
 
         # self._conv_trans_5 = nn.ConvTranspose2d(in_channels=num_hiddens // 4,
         #                                         out_channels=num_hiddens // 8,
@@ -285,6 +296,10 @@ class Decoder(nn.Module):
                                                 kernel_size=(4, 4),
                                                 stride=(1, 1), padding=(0, 0), output_padding=(0, 0))
 
+        self.transpooling = nn.UpsamplingBilinear2d(scale_factor=2)
+
+        self.Sigmoid = nn.Sigmoid()
+
     def forward(self, inputs):
 
         #print("Working with new decoder")
@@ -292,31 +307,39 @@ class Decoder(nn.Module):
 
         # x = self._conv_1(inputs)
         # x = F.relu(x)
-        # # print(f"conv1: {x.shape}")
+        # print(f"conv1: {x.shape}")
 
         # x = self._conv_trans_1(x)
         # x = F.relu(x)
-        # # print(f"convtr1: {x.shape}")
+        # print(f"convtr1: {x.shape}")
 
         x = self._conv_trans_2(inputs)
-        x = F.relu(x)
-        # print(f"convtr2: {x.shape}")
+        x = F.leaky_relu(x)
+        print(f"convtr2: {x.shape}")
+
+        # x = self.transpooling(x)
+        # print(f"transpooling: {x.shape}")
 
         x = self._conv_trans_3(x)
-        x = F.relu(x)
-        # print(f"convtr3: {x.shape}")
+        x = F.leaky_relu(x)
+        print(f"convtr3: {x.shape}")
 
-        x = self._conv_trans_4(x)
-        x = F.relu(x)
-        # print(f"convtr4: {x.shape}")
+        # x = self.transpooling(x)
+        # print(f"transpooling: {x.shape}")
+
+        # x = self._conv_trans_4(x)
+        # x = F.relu(x)
+        # # print(f"convtr4: {x.shape}")
 
         # x = self._conv_trans_5(x)
         # x = F.relu(x)
         # # print(f"convtr5: {x.shape}")
 
         x = self._conv_trans_6(x)
-        x = F.relu(x)
-        # print(f"convtr6: {x.shape}")
+        x = F.leaky_relu(x)
+        print(f"convtr6: {x.shape}")
+
+        x = self.Sigmoid(x)
 
         return x
 
