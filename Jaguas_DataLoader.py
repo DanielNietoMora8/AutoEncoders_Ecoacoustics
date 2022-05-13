@@ -66,7 +66,7 @@ class SoundscapeData(Dataset):
         record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
 
         win_length = self.win_length
-        hop = int(np.round(win_length / 1.5))
+        hop = int(np.round(win_length / 1.5))*self.audio_length
         nfft = int(np.round(1*win_length))
         spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                                  hop_length=hop,

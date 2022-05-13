@@ -51,14 +51,14 @@ cuda = torch.device('cuda:0')
 torch.cuda.empty_cache()
 device = torch.device(cuda if torch.cuda.is_available() else "cpu")
 
-dataset = SoundscapeData(root_path=root_path, audio_length=2)
+dataset = SoundscapeData(root_path=root_path, audio_length=59)
 dataloader = DataLoader(dataset, batch_size=5)
 
 dataiter = iter(dataloader)
 S, record, sr = dataiter.next()
 record_2 = torch.unsqueeze(record, dim=2)
 win_length = 256
-hop = int(np.round(win_length/1.5))
+hop = int(np.round(win_length/1.5))*59
 nfft = int(np.round(1*win_length))
 
 print(f"hop:{hop}, nfft:{nfft}")
