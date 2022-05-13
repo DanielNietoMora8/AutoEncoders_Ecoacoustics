@@ -36,11 +36,11 @@ import torch
 from IPython.display import Audio, display
 import torchaudio
 import numpy as np
-from Utils import plot_spectrogram
+from Modules.Utils import plot_spectrogram
 from torch.utils.data import DataLoader
 from Jaguas_DataLoader import SoundscapeData
 import sounddevice as sd
-from Utils import play_audio
+from Models.Utils import play_audio
 import cv2
 import librosa
 
