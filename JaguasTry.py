@@ -40,7 +40,7 @@ from Modules.Utils import plot_spectrogram
 from torch.utils.data import DataLoader
 from Jaguas_DataLoader import SoundscapeData
 import sounddevice as sd
-from Models.Utils import play_audio
+from Modules.Utils import play_audio
 import cv2
 import librosa
 
@@ -51,14 +51,14 @@ cuda = torch.device('cuda:0')
 torch.cuda.empty_cache()
 device = torch.device(cuda if torch.cuda.is_available() else "cpu")
 
-dataset = SoundscapeData(root_path=root_path, audio_length=59)
+dataset = SoundscapeData(root_path=root_path, audio_length=1)
 dataloader = DataLoader(dataset, batch_size=5)
 
 dataiter = iter(dataloader)
 S, record, sr = dataiter.next()
 record_2 = torch.unsqueeze(record, dim=2)
-win_length = 256
-hop = int(np.round(win_length/1.5))*59
+win_length = 512
+hop = int(np.round(win_length/5.94))*dataset.audio_length
 nfft = int(np.round(1*win_length))
 
 print(f"hop:{hop}, nfft:{nfft}")
@@ -69,7 +69,7 @@ sxx = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                         normalized=False,
                                         center=True)(record)
 
-fig = plot_spectrogram(sxx[0, 0], "First_Try")
+fig = plot_spectrogram(sxx[0, 1], "First_Try")
 sd.play(record_2[0, 0, 0], 22050)
 
 # plt.savefig('image.png', bbox_inches='tight', pad_inches=0)

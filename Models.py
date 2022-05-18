@@ -100,43 +100,43 @@ class VAE(nn.Module):
         self.num_hiddens = num_hiddens
 
         self.encConv1 = nn.Conv2d(in_channels=in_channels,
-                                  out_channels=self.num_hiddens // 8,
+                                  out_channels=self.num_hiddens // 4,
                                   kernel_size=(4, 4),
                                   stride=(1, 1), padding=(0, 0))
 
-        self.encConv2 = nn.Conv2d(in_channels=self.num_hiddens // 8,
-                                  out_channels=self.num_hiddens // 4,
-                                  kernel_size=(4, 4),
-                                  stride=(2, 2), padding=(0, 0))
-
-        self.encConv3 = nn.Conv2d(in_channels=self.num_hiddens // 4,
-                                  out_channels=self.num_hiddens //2,
-                                  kernel_size=(4, 4),
-                                  stride=(2, 2), padding=(0, 0))
-
-        self.encConv4 = nn.Conv2d(in_channels=self.num_hiddens // 2,
+        self.encConv2 = nn.Conv2d(in_channels=self.num_hiddens // 4,
                                   out_channels=self.num_hiddens,
                                   kernel_size=(4, 4),
                                   stride=(2, 2), padding=(0, 0))
 
+        self.encConv3 = nn.Conv2d(in_channels=self.num_hiddens,
+                                  out_channels=self.num_hiddens * 2,
+                                  kernel_size=(4, 4),
+                                  stride=(2, 2), padding=(0, 0))
+        #
+        # self.encConv4 = nn.Conv2d(in_channels=self.num_hiddens // 2,
+        #                           out_channels=self.num_hiddens,
+        #                           kernel_size=(4, 4),
+        #                           stride=(2, 2), padding=(0, 0))
+
         # Initializing the fully-connected layer and 2 convolutional layers for decoder
 
-        self.decConv1 = nn.ConvTranspose2d(in_channels=self.num_hiddens,
-                                           out_channels=self.num_hiddens // 2,
+        self.decConv1 = nn.ConvTranspose2d(in_channels=self.num_hiddens * 2,
+                                           out_channels=self.num_hiddens,
                                            kernel_size=(4, 4),
                                            stride=(2, 2), padding=(0, 0))
 
-        self.decConv2 = nn.ConvTranspose2d(in_channels=self.num_hiddens // 2,
+        self.decConv2 = nn.ConvTranspose2d(in_channels=self.num_hiddens,
                                            out_channels=self.num_hiddens // 4,
                                            kernel_size=(4, 4),
                                            stride=(2, 2), padding=(0, 0))
 
-        self.decConv3 = nn.ConvTranspose2d(in_channels=self.num_hiddens // 4,
-                                           out_channels=self.num_hiddens // 8,
-                                           kernel_size=(4, 4),
-                                           stride=(2, 2), padding=(0, 0))
+        # self.decConv3 = nn.ConvTranspose2d(in_channels=self.num_hiddens // 4,
+        #                                    out_channels=self.num_hiddens // 8,
+        #                                    kernel_size=(4, 4),
+        #                                    stride=(2, 2), padding=(0, 0))
 
-        self.decConv4 = nn.ConvTranspose2d(in_channels=self.num_hiddens // 8,
+        self.decConv4 = nn.ConvTranspose2d(in_channels=self.num_hiddens // 4,
                                            out_channels=in_channels,
                                            kernel_size=(4, 4),
                                            stride=(1, 1), padding=(0, 0))
@@ -152,8 +152,8 @@ class VAE(nn.Module):
         print(f"conv2: {x.shape}")
         x = F.relu(self.encConv3(x))
         print(f"conv3: {x.shape}")
-        x = F.relu(self.encConv4(x))
-        print(f"conv4: {x.shape}")
+        # x = F.relu(self.encConv4(x))
+        # print(f"conv4: {x.shape}")
 
         self.xshape = x.shape
         self.featureDim = x.shape[1]*x.shape[2]*x.shape[3]
@@ -161,7 +161,7 @@ class VAE(nn.Module):
         self.encFC2 = nn.Linear(self.featureDim, self.zDim)
         x = x.view(-1, self.featureDim)
 
-        print(f"x.view: {x.shape}")
+        # print(f"x.view: {x.shape}")
         mu = self.encFC1(x)
         logVar = self.encFC2(x)
         return mu, logVar
@@ -179,9 +179,12 @@ class VAE(nn.Module):
         x = F.relu(self.decFC1(z))
         print(f"decFC1: {x.shape}")
         x = x.view(-1, self.num_hiddens, self.xshape[2], self.xshape[3])
+        print(f"view: {x.shape}")
         x = F.relu(self.decConv1(x))
+        print(f"decC1: {x.shape}")
         x = F.relu(self.decConv2(x))
-        x = F.relu(self.decConv3(x))
+        print(f"decC2: {x.shape}")
+        # x = F.relu(self.decConv3(x))
         x = F.relu(self.decConv4(x))
         print(f"deconv2: {x.shape}")
         #x = torch.sigmoid(self.decConv2(x))
@@ -229,14 +232,14 @@ class Encoder(nn.Module):
         print(f"inputs:{inputs.shape}")
         x = self._conv_1(inputs)
         x = F.leaky_relu(x)
-        print(f"conv1: {x.shape}")
+        # print(f"conv1: {x.shape}")
 
         # x = self.pooling(x)
         # print(f"pooling1: {x.shape}")
 
         x = self._conv_2(x)
         x = F.leaky_relu(x)
-        print(f"conv2: {x.shape}")
+        # print(f"conv2: {x.shape}")
 
         # x = self.pooling(x)
         # print(f"pooling2: {x.shape}")
@@ -315,14 +318,14 @@ class Decoder(nn.Module):
 
         x = self._conv_trans_2(inputs)
         x = F.leaky_relu(x)
-        print(f"convtr2: {x.shape}")
+        # print(f"convtr2: {x.shape}")
 
         # x = self.transpooling(x)
         # print(f"transpooling: {x.shape}")
 
         x = self._conv_trans_3(x)
         x = F.leaky_relu(x)
-        print(f"convtr3: {x.shape}")
+        # print(f"convtr3: {x.shape}")
 
         # x = self.transpooling(x)
         # print(f"transpooling: {x.shape}")
@@ -337,7 +340,7 @@ class Decoder(nn.Module):
 
         x = self._conv_trans_6(x)
         x = F.leaky_relu(x)
-        print(f"convtr6: {x.shape}")
+        # print(f"convtr6: {x.shape}")
 
         x = self.Sigmoid(x)
 
