@@ -14,7 +14,7 @@ class SoundscapeData(Dataset):
     to return.
     """
 
-    def __init__(self, root_path: str, audio_length: int, ext: str = "wav", win_length: int = 256):
+    def __init__(self, root_path: str, audio_length: int, ext: str = "wav", win_length: int = 255):
 
         """
         This function is used to initialize the Dataloader, here path and root of files are defined.
@@ -66,7 +66,8 @@ class SoundscapeData(Dataset):
         record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
 
         win_length = self.win_length
-        hop = int(np.round(win_length / 24))*self.audio_length
+        base_win = 256
+        hop = int(np.round(base_win/win_length * 172.3 * self.audio_length))  # (256, 1.5) (512,5.94) (1024,24)
         nfft = int(np.round(1*win_length))
         spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                                  hop_length=hop,
@@ -74,7 +75,7 @@ class SoundscapeData(Dataset):
                                                  power=2,
                                                  normalized=False)(record)
         # print(record.shape)
-        return spec, record, sr
+        return spec, record, resampling
 
     def __len__(self):
 

@@ -119,6 +119,8 @@ class VAE(nn.Module):
         #                           kernel_size=(4, 4),
         #                           stride=(2, 2), padding=(0, 0))
 
+        self.flatten = nn.Flatten()
+
         # Initializing the fully-connected layer and 2 convolutional layers for decoder
 
         self.decConv1 = nn.ConvTranspose2d(in_channels=self.num_hiddens * 2,
@@ -154,6 +156,7 @@ class VAE(nn.Module):
         print(f"conv3: {x.shape}")
         # x = F.relu(self.encConv4(x))
         # print(f"conv4: {x.shape}")
+        #x = self.flatten(x)
 
         self.xshape = x.shape
         self.featureDim = x.shape[1]*x.shape[2]*x.shape[3]
@@ -161,7 +164,7 @@ class VAE(nn.Module):
         self.encFC2 = nn.Linear(self.featureDim, self.zDim)
         x = x.view(-1, self.featureDim)
 
-        # print(f"x.view: {x.shape}")
+        print(f"x.view: {x.shape}")
         mu = self.encFC1(x)
         logVar = self.encFC2(x)
         return mu, logVar
@@ -199,6 +202,64 @@ class VAE(nn.Module):
         return out, mu, logVar
 
 
+class Reshape(nn.Module):
+    def __init__(self, *args):
+        super().__init__()
+        self.shape = args
+
+    def forward(self, x):
+        return x.view(self.shape)
+
+class VAE2(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 32, stride=(1, 1), kernel_size=(3, 3), padding=0),
+            F.LeakyReLU(),
+            nn.Conv2d(32, 64, stride=(2, 2), kernel_size=(3, 3), padding=0),
+            F.LeakyReLU(),
+            nn.Conv2d(64, 64, stride=(2, 2), kernel_size=(3, 3), padding=0),
+            F.LeakyReLU(),
+            nn.Conv2d(64, 64, stride=(1, 1), kernel_size=(3, 3), padding=0),
+            F.Flatten(),
+        )
+
+        self.z_mean = torch.nn.Linear(3136, 2)
+        self.z_log_var = torch.nn.Linear(3136, 2)
+
+        self.decoder = nn.Sequential(
+            torch.nn.Linear(2, 3136),
+            Reshape(-1, 64, 7, 7),
+            nn.ConvTranspose2d(64, 64, stride=(1, 1), kernel_size=(3, 3), padding=1),
+            nn.LeakyReLU(0.01),
+            nn.ConvTranspose2d(64, 64, stride=(2, 2), kernel_size=(3, 3), padding=1),
+            nn.LeakyReLU(0.01),
+            nn.ConvTranspose2d(64, 32, stride=(2, 2), kernel_size=(3, 3), padding=0),
+            nn.LeakyReLU(0.01),
+            nn.ConvTranspose2d(32, 1, stride=(1, 1), kernel_size=(3, 3), padding=0),
+            nn.Sigmoid()
+        )
+
+    def encoding_fn(self, x):
+        x = self.encoder(x)
+        z_mean, z_log_var = self.z_mean(x), self.z_log_var(x)
+        encoded = self.reparameterize(z_mean, z_log_var)
+        return encoded
+
+    def reparameterize(self, z_mu, z_log_var):
+        eps = torch.randn(z_mu.size(0), z_mu.size(1)).to(z_mu.get_device())
+        z = z_mu + eps * torch.exp(z_log_var / 2.)
+        return z
+
+    def forward(self, x):
+        x = self.encoder(x)
+        z_mean, z_log_var = self.z_mean(x), self.z_log_var(x)
+        encoded = self.reparameterize(z_mean, z_log_var)
+        decoded = self.decoder(encoded)
+        return encoded, z_mean, z_log_var, decoded
+
+
 class Encoder(nn.Module):
     def __init__(self, in_channels, num_hiddens):
         super(Encoder, self).__init__()
@@ -211,10 +272,11 @@ class Encoder(nn.Module):
                                  out_channels=num_hiddens,
                                  kernel_size=(4, 4),
                                  stride=(2, 2), padding=(0, 0))
-        # self._conv_3 = nn.Conv2d(in_channels=num_hiddens // 4,
-        #                          out_channels=num_hiddens // 2,
+        # self._conv_3 = nn.Conv2d(in_channels=num_hiddens // 2,
+        #                          out_channels=num_hiddens,
         #                          kernel_size=(4, 4),
         #                          stride=(2, 2), padding=(0, 0))
+
         # self._conv_4 = nn.Conv2d(in_channels=num_hiddens // 2,
         #                          out_channels=num_hiddens,
         #                          kernel_size=(4, 4),
@@ -298,6 +360,8 @@ class Decoder(nn.Module):
                                                 out_channels=1,
                                                 kernel_size=(4, 4),
                                                 stride=(1, 1), padding=(0, 0), output_padding=(0, 0))
+
+        self.dropout = nn.Dropout2d(p=0.2)
 
         self.transpooling = nn.UpsamplingBilinear2d(scale_factor=2)
 
@@ -490,6 +554,35 @@ class Model(nn.Module):
         x_recon = self._decoder(quantized)
 
         return loss, x_recon, perplexity
+
+
+class ClusterlingLayer(nn.Module):
+    def __init__(self, in_features=10, out_features=10, alpha=1.0):
+        super(ClusterlingLayer, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.alpha = alpha
+        self.weight = nn.Parameter(torch.Tensor(self.out_features, self.in_features))
+        self.weight = nn.init.xavier_uniform_(self.weight)
+
+    def forward(self, x):
+        x = x.unsqueeze(1) - self.weight
+        x = torch.mul(x, x)
+        x = torch.sum(x, dim=2)
+        x = 1.0 + (x / self.alpha)
+        x = 1.0 / x
+        x = x ** ((self.alpha +1.0) / 2.0)
+        x = torch.t(x) / torch.sum(x, dim=1)
+        x = torch.t(x)
+        return x
+
+    def extra_repr(self):
+        return 'in_features={}, out_features={}, alpha={}'.format(
+            self.in_features, self.out_features, self.alpha
+        )
+
+    def set_weight(self, tensor):
+        self.weight = nn.Parameter(tensor)
 
 
 class ModelName(str, Enum):
