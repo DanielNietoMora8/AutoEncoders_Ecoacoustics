@@ -278,3 +278,9 @@ cython_debug/
 #.idea/
 
 # End of https://www.toptal.com/developers/gitignore/api/pycharm,python,jupyternotebooks
+/corrupted_files.csv
+/.idea/
+/Tensorboard.py
+/Spectrograms_Plots.py
+/Leaky_Audio_Length_59_secs_win_length_257_Batch_size  8 num_hiddens  64 num_embeddings  64 embedding dim  128_low_error.pkl
+/Audio_Length_59_secs_win_length_257_Batch_size  8 num_hiddens  64 num_embeddings  64 embedding dim  128_low_error.pkl
