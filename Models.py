@@ -339,7 +339,7 @@ class Decoder(nn.Module):
         self._conv_trans_2 = nn.ConvTranspose2d(in_channels=embedding_dim,
                                                 out_channels=num_hiddens,
                                                 kernel_size=(4, 4),
-                                                stride=(2, 2), padding=(0, 0), output_padding=(0, 0))
+                                                stride=(2, 2), padding=(0, 0), output_padding=(1, 1))
 
         self._conv_trans_3 = nn.ConvTranspose2d(in_channels=num_hiddens,
                                                 out_channels=num_hiddens // 4,

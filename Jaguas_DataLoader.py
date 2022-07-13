@@ -67,10 +67,10 @@ class SoundscapeData(Dataset):
 
         win_length = self.win_length
         base_win = 256
-        hop = int(np.round(base_win/win_length * 172.3 * self.audio_length))  # (256, 1.5) (512,5.94) (1024,24)
+        # hop = int(np.round(base_win/win_length * 172.3 * self.audio_length))  # (256, 1.5) (512,5.94) (1024,24)
+        hop = win_length // 2
         nfft = int(np.round(1*win_length))
         spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
-                                                 hop_length=hop,
                                                  window_fn=torch.hamming_window,
                                                  power=2,
                                                  normalized=False)(record)

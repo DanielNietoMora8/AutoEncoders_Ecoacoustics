@@ -49,7 +49,7 @@ def size_convtranspose(input_size,
                        kernel_size: tuple = (0, 0),
                        padding: tuple = (0, 0),
                        dilatation: int = 1,
-                       output_padding: int = 0):
+                       output_padding: tuple = (0, 0)):
 
     """
     Function returning the size of each layer when Conv2dtransposed is applied.
@@ -70,10 +70,31 @@ def size_convtranspose(input_size,
     """
     #TODO: It is necessary to do a funtion with both, height and width dimensions and try to reduce the inputs.
 
-    h_out = (input_size[0] - 1) * stride[0] - (2*padding[0]) + dilatation * (kernel_size[0] - 1) + output_padding + 1
-    w_out = (input_size[1] - 1) * stride[1] - (2*padding[1]) + dilatation * (kernel_size[1] - 1) + output_padding + 1
+    h_out = (input_size[0] - 1) * stride[0] - (2*padding[0]) + dilatation * (kernel_size[0] - 1) + output_padding[0] + 1
+    w_out = (input_size[1] - 1) * stride[1] - (2*padding[1]) + dilatation * (kernel_size[1] - 1) + output_padding[1] + 1
     return h_out, w_out
 
+
+def compute_size(input: tuple, stride: list, kernel_size: list, output_padding: list, dilatation):
+
+    _input = []
+    _input.append(input)
+    for i in range(len(stride)):
+        iteration = size_conv(_input[i], stride=stride[i], kernel_size=kernel_size[i],
+                              dilatation=dilatation)
+        _input.append(iteration)
+    print(_input)
+
+    _output = []
+    _output.append(_input[-1])
+    stride.reverse()
+    kernel_size.reverse()
+    print(len(_input))
+    for i in range(len(_input)-1):
+        iteration = size_convtranspose(_output[i], stride=stride[i], kernel_size=kernel_size[i],
+                                       output_padding=output_padding[i], dilatation=1)
+        _output.append(iteration)
+    print(_output)
 
 def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', xmax=None):
     fig, axs = plt.subplots(1, 1)

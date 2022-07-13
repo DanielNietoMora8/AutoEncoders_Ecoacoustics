@@ -47,6 +47,7 @@ def train_model(model, dataloader, criteria, optimizer, scheduler, num_epochs, p
 
         for data in dataloader:
             inputs, _ = data
+            inputs = inputs.to(device="cuda")
 
 
 
