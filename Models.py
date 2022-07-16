@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from Modules.Utils import compute_size as cs
 from enum import Enum
 
 
@@ -126,7 +127,7 @@ class VAE(nn.Module):
         self.decConv1 = nn.ConvTranspose2d(in_channels=self.num_hiddens * 2,
                                            out_channels=self.num_hiddens,
                                            kernel_size=(4, 4),
-                                           stride=(2, 2), padding=(0, 0))
+                                           stride=(2, 2), padding=(0, 0), output_padding=(1, 1))
 
         self.decConv2 = nn.ConvTranspose2d(in_channels=self.num_hiddens,
                                            out_channels=self.num_hiddens // 4,
@@ -160,13 +161,14 @@ class VAE(nn.Module):
 
         self.xshape = x.shape
         self.featureDim = x.shape[1]*x.shape[2]*x.shape[3]
+        print(x.device)
         self.encFC1 = nn.Linear(self.featureDim, self.zDim)
         self.encFC2 = nn.Linear(self.featureDim, self.zDim)
         x = x.view(-1, self.featureDim)
 
         print(f"x.view: {x.shape}")
-        mu = self.encFC1(x)
-        logVar = self.encFC2(x)
+        mu = self.encFC1(x.to('cpu'))
+        logVar = self.encFC2(x.to('cpu'))
         return mu, logVar
 
     def reparameterize(self, mu, logVar):
@@ -181,7 +183,7 @@ class VAE(nn.Module):
         self.decFC1 = nn.Linear(self.zDim, self.featureDim)
         x = F.relu(self.decFC1(z))
         print(f"decFC1: {x.shape}")
-        x = x.view(-1, self.num_hiddens, self.xshape[2], self.xshape[3])
+        x = x.view(-1, self.num_hiddens*2, self.xshape[2], self.xshape[3])
         print(f"view: {x.shape}")
         x = F.relu(self.decConv1(x))
         print(f"decC1: {x.shape}")
@@ -210,54 +212,75 @@ class Reshape(nn.Module):
     def forward(self, x):
         return x.view(self.shape)
 
+
 class VAE2(nn.Module):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, img_shape, imgChannels=1, num_hiddens : int=64, zDim : int=128):
+        super(VAE2, self).__init__()
 
-        self.encoder = nn.Sequential(
-            nn.Conv2d(1, 32, stride=(1, 1), kernel_size=(3, 3), padding=0),
-            F.LeakyReLU(),
-            nn.Conv2d(32, 64, stride=(2, 2), kernel_size=(3, 3), padding=0),
-            F.LeakyReLU(),
-            nn.Conv2d(64, 64, stride=(2, 2), kernel_size=(3, 3), padding=0),
-            F.LeakyReLU(),
-            nn.Conv2d(64, 64, stride=(1, 1), kernel_size=(3, 3), padding=0),
-            F.Flatten(),
-        )
+        # Initializing the 2 convolutional layers and 2 full-connected layers for the encoder
+        self.img_shape = img_shape
+        self.num_hiddens = num_hiddens
+        self.encConv1 = nn.Conv2d(imgChannels, num_hiddens // 4, 3, 2)
+        self.encConv2 = nn.Conv2d(num_hiddens // 4, num_hiddens, 3, 2)
 
-        self.z_mean = torch.nn.Linear(3136, 2)
-        self.z_log_var = torch.nn.Linear(3136, 2)
+        # stride = [self.encConv1.stride, self.encConv2.stride]
+        # padding = [self.encConv1.padding, self.encConv2.padding]
+        # kernel = [self.encConv1.kernel_size, self.encConv2.kernel_size]
+        # output_padding = [(0, 0), (0, 0)]
 
-        self.decoder = nn.Sequential(
-            torch.nn.Linear(2, 3136),
-            Reshape(-1, 64, 7, 7),
-            nn.ConvTranspose2d(64, 64, stride=(1, 1), kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(0.01),
-            nn.ConvTranspose2d(64, 64, stride=(2, 2), kernel_size=(3, 3), padding=1),
-            nn.LeakyReLU(0.01),
-            nn.ConvTranspose2d(64, 32, stride=(2, 2), kernel_size=(3, 3), padding=0),
-            nn.LeakyReLU(0.01),
-            nn.ConvTranspose2d(32, 1, stride=(1, 1), kernel_size=(3, 3), padding=0),
-            nn.Sigmoid()
-        )
+        # self.encoded_size, self.decoded_size = cs(self.img_shape, stride=stride,
+        #                                           kernel_size=kernel,
+        #                                           output_padding=output_padding,
+        #                                           dilatation=1)
+        self.featureDim = num_hiddens*128*128
+        self.encFC1 = nn.Linear(self.featureDim, zDim)
+        self.encFC2 = nn.Linear(self.featureDim, zDim)
 
-    def encoding_fn(self, x):
-        x = self.encoder(x)
-        z_mean, z_log_var = self.z_mean(x), self.z_log_var(x)
-        encoded = self.reparameterize(z_mean, z_log_var)
-        return encoded
+        # Initializing the fully-connected layer and 2 convolutional layers for decoder
+        self.decFC1 = nn.Linear(zDim, self.featureDim)
+        self.decConv1 = nn.ConvTranspose2d(num_hiddens, num_hiddens // 4, 3, 2)
+        self.decConv2 = nn.ConvTranspose2d(num_hiddens // 4, imgChannels, 3, 2)
 
-    def reparameterize(self, z_mu, z_log_var):
-        eps = torch.randn(z_mu.size(0), z_mu.size(1)).to(z_mu.get_device())
-        z = z_mu + eps * torch.exp(z_log_var / 2.)
-        return z
+    def encoder(self, x):
+
+        # Input is fed into 2 convolutional layers sequentially
+        # The output feature map are fed into 2 fully-connected layers to predict mean (mu) and variance (logVar)
+        # Mu and logVar are used for generating middle representation z and KL divergence loss
+        x = F.relu(self.encConv1(x))
+        print(x.shape)
+        x = F.relu(self.encConv2(x))
+        print(x.shape)
+        x = x.view(-1, self.featureDim)
+        print(x.shape)
+        mu = self.encFC1(x)
+        logVar = self.encFC2(x)
+        return mu, logVar
+
+    def reparameterize(self, mu, logVar):
+
+        #Reparameterization takes in the input mu and logVar and sample the mu + std * eps
+        std = torch.exp(logVar/2)
+        eps = torch.randn_like(std)
+        return mu + std * eps
+
+    def decoder(self, z):
+
+        # z is fed back into a fully-connected layers and then into two transpose convolutional layers
+        # The generated output is the same size of the original input
+        x = F.relu(self.decFC1(z))
+        x = x.view(-1, self.num_hiddens, 128, 128)
+        x = F.relu(self.decConv1(x))
+        x = torch.sigmoid(self.decConv2(x))
+        return x
 
     def forward(self, x):
-        x = self.encoder(x)
-        z_mean, z_log_var = self.z_mean(x), self.z_log_var(x)
-        encoded = self.reparameterize(z_mean, z_log_var)
-        decoded = self.decoder(encoded)
-        return encoded, z_mean, z_log_var, decoded
+
+        # The entire pipeline of the VAE: encoder -> reparameterization -> decoder
+        # output, mu, and logVar are returned for loss computation
+        mu, logVar = self.encoder(x)
+        z = self.reparameterize(mu, logVar)
+        out = self.decoder(z)
+        return out, mu, logVar
 
 
 class Encoder(nn.Module):
@@ -266,15 +289,15 @@ class Encoder(nn.Module):
 
         self._conv_1 = nn.Conv2d(in_channels=in_channels,
                                  out_channels=num_hiddens // 4,
-                                 kernel_size=(4, 4),
-                                 stride=(1, 1), padding=(0, 0))
+                                 kernel_size=(3, 3),
+                                 stride=(2, 2), padding=(0, 0))
         self._conv_2 = nn.Conv2d(in_channels=num_hiddens // 4,
                                  out_channels=num_hiddens,
-                                 kernel_size=(4, 4),
+                                 kernel_size=(3, 3),
                                  stride=(2, 2), padding=(0, 0))
         # self._conv_3 = nn.Conv2d(in_channels=num_hiddens // 2,
         #                          out_channels=num_hiddens,
-        #                          kernel_size=(4, 4),
+        #                          kernel_size=(3, 3),
         #                          stride=(2, 2), padding=(0, 0))
 
         # self._conv_4 = nn.Conv2d(in_channels=num_hiddens // 2,
@@ -339,11 +362,11 @@ class Decoder(nn.Module):
         self._conv_trans_2 = nn.ConvTranspose2d(in_channels=embedding_dim,
                                                 out_channels=num_hiddens,
                                                 kernel_size=(4, 4),
-                                                stride=(2, 2), padding=(0, 0), output_padding=(1, 1))
+                                                stride=(2, 2), padding=(0, 0), output_padding=(0, 0))
 
         self._conv_trans_3 = nn.ConvTranspose2d(in_channels=num_hiddens,
                                                 out_channels=num_hiddens // 4,
-                                                kernel_size=(4, 4),
+                                                kernel_size=(3, 3),
                                                 stride=(2, 2), padding=(0, 0),  output_padding=(0, 0))
 
         # self._conv_trans_4 = nn.ConvTranspose2d(in_channels=num_hiddens // 2,
@@ -358,14 +381,15 @@ class Decoder(nn.Module):
 
         self._conv_trans_6 = nn.ConvTranspose2d(in_channels=num_hiddens // 4,
                                                 out_channels=1,
-                                                kernel_size=(4, 4),
-                                                stride=(1, 1), padding=(0, 0), output_padding=(0, 0))
+                                                kernel_size=(3, 3),
+                                                stride=(2, 2), padding=(0, 0), output_padding=(0, 0))
 
         self.dropout = nn.Dropout2d(p=0.2)
 
-        self.transpooling = nn.UpsamplingBilinear2d(scale_factor=2)
+        self.transpooling = nn.MaxUnpool2d(2)
 
         self.Sigmoid = nn.Sigmoid()
+        self.Tanh = nn.Tanh()
 
     def forward(self, inputs):
 
@@ -403,7 +427,7 @@ class Decoder(nn.Module):
         # # print(f"convtr5: {x.shape}")
 
         x = self._conv_trans_6(x)
-        x = F.leaky_relu(x)
+        # x = F.leaky_relu(x)
         # print(f"convtr6: {x.shape}")
 
         x = self.Sigmoid(x)
