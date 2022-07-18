@@ -20,18 +20,23 @@ class ConvAE(nn.Module):
         # TODO: To correct the current sizes of the decoder.
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(1, num_hiddens // 4, kernel_size=3, stride=2, padding=0), # N, 256, 127, 8004
+            nn.Conv2d(1, num_hiddens // 8, kernel_size=8, stride=3, padding=0), # N, 256, 127, 8004
             nn.ReLU(),
-            nn.Conv2d(num_hiddens // 4, num_hiddens // 2, kernel_size=3, stride=2, padding=0), # N, 512, 125,969
+            nn.Conv2d(num_hiddens // 8, num_hiddens // 4, kernel_size=8, stride=3, padding=0), # N, 512, 125,969
             nn.ReLU(),
-            nn.Conv2d(num_hiddens // 2, num_hiddens, kernel_size=3, stride=2, padding=0),  # N, 512, 125,969
+            nn.Conv2d(num_hiddens // 4, num_hiddens // 2, kernel_size=4, stride=3, padding=0),  # N, 512, 125,969
+            nn.ReLU(),
+            nn.Conv2d(num_hiddens // 2, num_hiddens, kernel_size=2, stride=2, padding=0),  # N, 512, 125,969
+            nn.ReLU()
              )
         self.decoder = nn.Sequential(  # This is like go in opposite direction respect the encoder
-            nn.ConvTranspose2d(num_hiddens, num_hiddens // 2, kernel_size=3, stride=2, padding=0, output_padding=1),  # N, 32, 126,8000
+            nn.ConvTranspose2d(num_hiddens, num_hiddens // 2, kernel_size=2, stride=2, padding=0, output_padding=0),  # N, 32, 126,8000
             nn.ReLU(),
-            nn.ConvTranspose2d(num_hiddens // 2, num_hiddens // 4, kernel_size=3, stride=2, padding=0, output_padding=0),  # N, 32, 127,64248
+            nn.ConvTranspose2d(num_hiddens // 2, num_hiddens // 4, kernel_size=4, stride=3, padding=0, output_padding=0),  # N, 32, 127,64248
             nn.ReLU(),
-            nn.ConvTranspose2d(num_hiddens // 4, 1, kernel_size=3, stride=2, padding=0, output_padding=0),  # N, 32, 127,64248
+            nn.ConvTranspose2d(num_hiddens // 4, num_hiddens // 8, kernel_size=8, stride=3, padding=0, output_padding=0),  # N, 32, 127,64248
+            nn.ReLU(),
+            nn.ConvTranspose2d(num_hiddens // 8, 1, kernel_size=8, stride=3, padding=0, output_padding=0),  # N, 32, 127,64248
             nn.Sigmoid()
 
         )

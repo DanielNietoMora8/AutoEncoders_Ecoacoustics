@@ -73,7 +73,8 @@ class SoundscapeData(Dataset):
         spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                                  window_fn=torch.hamming_window,
                                                  power=2,
-                                                 normalized=True)(record)
+                                                 normalized=False)(record)
+        spec = torch.log1p(spec)
         # spec = torch.unsqueeze(spec, dim=1)
         # db = F.AmplitudeToDB(top_db=80)
         # # print(record.shape)
