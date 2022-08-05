@@ -223,29 +223,31 @@ class Reshape(nn.Module):
 
 
 class VAE2(nn.Module):
-    def __init__(self, img_shape, imgChannels=1, num_hiddens: int = 64, zDim: int=128):
+    def __init__(self, imgChannels=1, num_hiddens: int = 64, zDim: int=128):
         super(VAE2, self).__init__()
 
         # Initializing the 2 convolutional layers and 2 full-connected layers for the encoder
-        self.img_shape = img_shape
         self.num_hiddens = num_hiddens
-        self.encConv1 = nn.Conv2d(imgChannels, num_hiddens // 16, 3, 2)
-        self.encConv2 = nn.Conv2d(num_hiddens // 16, num_hiddens // 8, 3, 2)
-        self.encConv3 = nn.Conv2d(num_hiddens // 8, num_hiddens // 4, 3, 2)
-        self.encConv4 = nn.Conv2d(num_hiddens // 4, num_hiddens // 2, 3, 2)
-        self.encConv5 = nn.Conv2d(num_hiddens // 2, num_hiddens, 3, 2)
+        self.encConv1 = nn.Conv2d(imgChannels, num_hiddens // 4, 8, 3)
+        self.encConv2 = nn.Conv2d(num_hiddens // 4, num_hiddens, 4, 2)
+        # self.encConv3 = nn.Conv2d(num_hiddens // 2, num_hiddens // 2, 3, 2)
+        # self.encConv4 = nn.Conv2d(num_hiddens // 2, num_hiddens, 3, 2)
+        # self.encConv5 = nn.Conv2d(num_hiddens, num_hiddens, 3, 2)
+        # self.encConv6 = nn.Conv2d(num_hiddens // 2, num_hiddens, 3, 2)
 
-        self.featureDim = num_hiddens*15*15
+        self.featureDim = num_hiddens*84*84
         self.encFC1 = nn.Linear(self.featureDim, zDim)
         self.encFC2 = nn.Linear(self.featureDim, zDim)
 
         # Initializing the fully-connected layer and 2 convolutional layers for decoder
         self.decFC1 = nn.Linear(zDim, self.featureDim)
-        self.decConv1 = nn.ConvTranspose2d(num_hiddens, num_hiddens // 2, 3, 2, output_padding=(0, 0))
-        self.decConv2 = nn.ConvTranspose2d(num_hiddens // 2, num_hiddens // 4, 3, 2, output_padding=0)
-        self.decConv3 = nn.ConvTranspose2d(num_hiddens // 4, num_hiddens // 8, 3, 2, output_padding=1)
-        self.decConv4 = nn.ConvTranspose2d(num_hiddens // 8, num_hiddens // 16, 3, 2)
-        self.decConv5 = nn.ConvTranspose2d(num_hiddens // 16, imgChannels, 3, 2)
+        self.decConv1 = nn.ConvTranspose2d(num_hiddens, num_hiddens // 4, 4, 2, output_padding=0)
+        self.decConv2 = nn.ConvTranspose2d(num_hiddens // 4, imgChannels, 8, 3, output_padding=0)
+        # self.decConv3 = nn.ConvTranspose2d(num_hiddens // 2, num_hiddens // 2, 3, 2, output_padding=0)
+        # self.decConv4 = nn.ConvTranspose2d(num_hiddens // 2, num_hiddens // 4, 4, 2, output_padding=0)
+        # self.decConv5 = nn.ConvTranspose2d(num_hiddens // 4, imgChannels, 4, 2, output_padding=1)
+        # self.decConv5 = nn.ConvTranspose2d(num_hiddens // 4, num_hiddens // 4, 3, 2)
+        # self.decConv5 = nn.ConvTranspose2d(num_hiddens // 4, imgChannels, 3, 2)
 
         self.Sigmoid = nn.Sigmoid()
 
@@ -259,9 +261,9 @@ class VAE2(nn.Module):
         # print(f'conv1{x.shape}')
         x = F.relu(self.encConv2(x))
         # print(f'conv2{x.shape}')
-        x = F.relu(self.encConv3(x))
-        x = F.relu(self.encConv4(x))
-        x = F.relu(self.encConv5(x))
+        # x = F.relu(self.encConv3(x))
+        # x = F.relu(self.encConv4(x))
+        # x = F.relu(self.encConv5(x))
         # print(f'conv3{x.shape}')
         x = x.view(-1, self.featureDim)
         # print(f'encx.view{x.shape}')
@@ -284,15 +286,15 @@ class VAE2(nn.Module):
         # print(f'z:{z.shape}')
         x = F.relu(self.decFC1(z))
         # print(f'decFC1: {x.shape}')
-        x = x.view(-1, self.num_hiddens, 15, 15)
+        x = x.view(-1, self.num_hiddens, 84, 84)
         # print(f'x.view: {x.shape}')
         x = F.relu(self.decConv1(x))
         # print(f'x.decConv1: {x.shape}')
-        x = F.relu(self.decConv2(x))
-        x = F.relu(self.decConv3(x))
-        x = F.relu(self.decConv4(x))
+        # x = F.relu(self.decConv2(x))
+        # x = F.relu(self.decConv3(x))
+        # x = F.relu(self.decConv4(x))
         # print(f'x.decConv2: {x.shape}')
-        x = self.Sigmoid(self.decConv5(x))
+        x = self.Sigmoid(self.decConv2(x))
         # print(f'output: {x.shape}')
         return x
 
@@ -314,14 +316,15 @@ class Encoder(nn.Module):
                                  out_channels=num_hiddens // 4,
                                  kernel_size=(3, 3),
                                  stride=(2, 2), padding=(0, 0))
-        self._conv_2 = nn.Conv2d(in_channels=num_hiddens // 4,
+        # self._conv_2 = nn.Conv2d(in_channels=num_hiddens // 4,
+        #                          out_channels=num_hiddens // 2,
+        #                          kernel_size=(8, 8),
+        #                          stride=(2, 2), padding=(0, 0))
+
+        self._conv_3 = nn.Conv2d(in_channels=num_hiddens // 4,
                                  out_channels=num_hiddens,
                                  kernel_size=(3, 3),
                                  stride=(2, 2), padding=(0, 0))
-        # self._conv_3 = nn.Conv2d(in_channels=num_hiddens // 2,
-        #                          out_channels=num_hiddens,
-        #                          kernel_size=(3, 3),
-        #                          stride=(2, 2), padding=(0, 0))
 
         # self._conv_4 = nn.Conv2d(in_channels=num_hiddens // 2,
         #                          out_channels=num_hiddens,
@@ -345,16 +348,16 @@ class Encoder(nn.Module):
         # x = self.pooling(x)
         # print(f"pooling1: {x.shape}")
 
-        x = self._conv_2(x)
-        x = F.leaky_relu(x)
-        # print(f"conv2: {x.shape}")
+        # x = self._conv_2(x)
+        # x = F.leaky_relu(x)
+        # # print(f"conv2: {x.shape}")
 
         # x = self.pooling(x)
         # print(f"pooling2: {x.shape}")
 
-        # x = self._conv_3(x)
-        # x = F.relu(x)
-        # # print(f"conv3: {x.shape}")
+        x = self._conv_3(x)
+        x = F.relu(x)
+        # print(f"conv3: {x.shape}")
 
         # x = self._conv_4(x)
         # x = F.relu(x)
@@ -397,9 +400,9 @@ class Decoder(nn.Module):
         #                                         kernel_size=(4, 4),
         #                                         stride=(2, 2), padding=(0, 0), output_padding=(0, 0))
 
-        # self._conv_trans_5 = nn.ConvTranspose2d(in_channels=num_hiddens // 4,
-        #                                         out_channels=num_hiddens // 8,
-        #                                         kernel_size=(4, 4),
+        # self._conv_trans_5 = nn.ConvTranspose2d(in_channels=num_hiddens // 2,
+        #                                         out_channels=num_hiddens // 4,
+        #                                         kernel_size=(8, 8),
         #                                         stride=(2, 2), padding=(0, 0), output_padding=(0, 0))
 
         self._conv_trans_6 = nn.ConvTranspose2d(in_channels=num_hiddens // 4,

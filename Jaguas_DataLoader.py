@@ -57,6 +57,7 @@ class SoundscapeData(Dataset):
 
         """
         path_index = self.files[index]
+        label = str(path_index).split("/")[-2]
         record, sr = torchaudio.load(path_index)
         resampling = 22050
         audio_len = self.audio_length * resampling
@@ -81,7 +82,7 @@ class SoundscapeData(Dataset):
         # spec = db(spec)
         # spec = torch.squeeze(spec, dim=1)
         # print(spec.shape)
-        return spec, record, resampling
+        return spec, record, label
 
     def __len__(self):
 
