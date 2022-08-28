@@ -76,8 +76,8 @@ class SoundscapeData(Dataset):
                                                  power=2,
                                                  normalized=False)(record)
         spec = torch.log1p(spec)
-        label = np.array(label)
-        label = np.repeat(label, 4, 0)
+        # label = np.array(label)
+        # label = np.repeat(label, 4, 0)
         # spec = torch.unsqueeze(spec, dim=1)
         # db = F.AmplitudeToDB(top_db=80)
         # # print(record.shape)
