@@ -93,6 +93,34 @@ def compute_size(input: tuple, stride: list, kernel_size: list, output_padding: 
         _output.append(iteration)
     return _input, _output
 
+def Spectrogram(files: list, module: str = "librosa", sr: int = 48000, n_fft: int = 1024, window_length: int = 1024):
+
+    if module == 'librosa':
+        for i in files:
+            print(f'processing image: {i}')
+            record, _ = librosa.load(str(i))
+            hop = int(np.round(window_length/4))
+            n_fft = int(np.round(2*window_length))
+            window = signal.windows.hamming(window_length, sym=False)
+            S = np.abs(librosa.stft(record, n_fft=window_length, hop_length=hop, window=window,
+                                    win_length=window_length))
+            fig, ax1 = plt.subplots()
+            img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max), sr=sr, x_axis='time', y_axis="hz", ax=ax1)
+            ax1.set_title('Power spectrogram')
+            fig.colorbar(img, ax=ax1, format="%+2.0f dB")
+            plt.show()
+
+    elif module == 'torch':
+        for i in files:
+            record, sr = torchaudio.load(str(i))
+            spec = torchaudio.transforms.Spectrogram(n_fft=n_fft)(record)
+            plt.figure()
+            plt.imshow(spec.log2()[0, :].numpy())
+            plt.show()
+
+    else:
+        print(f"Module {module} does not able to use ")
+
 def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', xmax=None):
     fig, axs = plt.subplots(1, 1)
     axs.set_title(title or 'Spectrogram (db)')
@@ -157,7 +185,7 @@ def VAE_loss_function(y_hat, y, mu, logvar):
 def train_model_ae(dataloader, model, num_epochs: int, num_images: int, learning_rate: float, device):
 
     """
-    This function trains an autoencoder based on the ConvAE contained in Models.py
+    This function trains an autoencoder based on the ConvAE contained in Models
 
     :param dataloader: Torch dataloader for image loading.
     :type dataloader: torch
