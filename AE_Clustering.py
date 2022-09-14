@@ -1,3 +1,11 @@
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.manifold import TSNE
+from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn import preprocessing
+import matplotlib.pyplot as plt
+import numpy as np
+import torch 
+
 class AE_Clustering:
 
     def __init__(self, AE_testing, dataset, n_clusters: int = 27):
@@ -15,7 +23,7 @@ class AE_Clustering:
 
     def plot_clusters(self, X_embedded, original_labels, cluster_labels):
         plt.close("all")
-        output.clear()
+        #output.clear()
         fig = plt.figure(figsize=(15, 15))
         ax = fig.add_subplot(2, 1, 1)
         ax.scatter(X_embedded[:,0 ], X_embedded[:, 1], c=cluster_labels)
@@ -29,7 +37,7 @@ class AE_Clustering:
         for i, spec in enumerate(self.kmeans.cluster_centers_):
             encodings = spec.reshape(self._encodings_size)
             encodings = torch.tensor(encodings).float()
-            decodings = model.decoder(encodings).detach().numpy()
+            decodings = self._ae_testing.model.decoder(encodings).detach().numpy()
             plt.subplot(9, 9, i + 1)
             plt.imshow(decodings[0, :, :], cmap="inferno", interpolation="nearest", vmin=0, vmax=0.02)
             plt.xticks(())

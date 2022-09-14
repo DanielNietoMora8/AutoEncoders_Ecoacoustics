@@ -1,5 +1,16 @@
 from scipy.io.wavfile import write
-
+from six.moves import xrange
+import torch
+import torchvision
+import matplotlib.pyplot as plt
+import numpy as np
+import torchvision.transforms as transforms
+from torchvision.utils import make_grid
+import torchaudio.transforms as audio_transform
+import torch.nn.functional as F
+import wandb
+from wandb import AlertLevel
+from datetime import timedelta
 
 class TestModel:
 
@@ -7,10 +18,11 @@ class TestModel:
         self._model = model
         self._iterator = iterator
         self.num_views = num_views
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def save_waveform(self, waveform, directory=None):
-        scaled = np.int16(waveform[i, 0] / np.max(np.abs(waveform[i, 0])) * 32767)
-        write(directory + str(i) + '.wav', 22050, scaled)
+        scaled = np.int16(waveform[0, 0] / np.max(np.abs(waveform[0, 0])) * 32767)
+        write(directory + '.wav', 22050, scaled)
 
     def plot_waveform(self, waveform, n_rows=4):
         fig, axs = plt.subplots(n_rows, figsize=(10, 6), constrained_layout=True)
@@ -51,7 +63,7 @@ class TestModel:
                                                           valid_originals.shape[2], valid_originals.shape[3]))
         valid_originals = torch.unsqueeze(valid_originals, 1)
 
-        valid_originals = valid_originals.to(device)
+        valid_originals = valid_originals.to(self.device)
 
         valid_encodings = self._model.encoder(valid_originals)
 
@@ -90,6 +102,7 @@ class TrainModel:
 
     def __init__(self, model):
         self._model = model
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def wandb_init(self, config, keys=["audio_length", "win_length", "batch_size"]):
         try:
@@ -142,7 +155,7 @@ class TrainModel:
 
                 data = torch.reshape(data, (data.shape[0] * data.shape[1], data.shape[2], data.shape[3]))
                 data = torch.unsqueeze(data, 1)
-                data = data.to(device)
+                data = data.to(self.device)
 
                 optimizer.zero_grad()
                 data_recon = self._model(data)
@@ -179,7 +192,7 @@ class TrainModel:
                         level=AlertLevel.WARN,
                         wait_duration=timedelta(minutes=5)
                     )
-                    torch.save(model.state_dict(), f'{run_name}_low_error.pkl')
+                    torch.save(self._model.state_dict(), f'{run_name}_low_error.pkl')
                 else:
                     pass
 
@@ -187,7 +200,7 @@ class TrainModel:
             torch.cuda.empty_cache()
             time = datetime.datetime.now()
             torch.save(self._model.state_dict(), f'{run_name}_epoch:{epoch + 1}_{time.day}_{time.hour}.pkl')
-            output.clear()
+            # output.clear()
             print(optimizer.state_dict()["param_groups"][0]["lr"])
 
         wandb.finish()

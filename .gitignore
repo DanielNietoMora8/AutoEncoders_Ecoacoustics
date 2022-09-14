@@ -280,6 +280,7 @@ cython_debug/
 # End of https://www.toptal.com/developers/gitignore/api/pycharm,python,jupyternotebooks
 /corrupted_files.csv
 /.idea/
-/Tensorboard.py
-/Spectrograms_Plots.py
-/temp.py
+/Extra_and_Unused/Tensorboard.py
+/Extra_and_Unused/Spectrograms_Plots.py
+/Extra_and_Unused/temp.py
+/Images/
