@@ -37,7 +37,7 @@ class AE_Clustering:
         for i, spec in enumerate(self.kmeans.cluster_centers_):
             encodings = spec.reshape(self._encodings_size)
             encodings = torch.tensor(encodings).float()
-            decodings = self._ae_testing.model.decoder(encodings).detach().numpy()
+            decodings = self._ae_testing._model.decoder(encodings).detach().numpy()
             plt.subplot(9, 9, i + 1)
             plt.imshow(decodings[0, :, :], cmap="inferno", interpolation="nearest", vmin=0, vmax=0.02)
             plt.xticks(())

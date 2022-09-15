@@ -12,13 +12,15 @@ import wandb
 from wandb import AlertLevel
 from datetime import timedelta
 
+
 class TestModel:
 
-    def __init__(self, model, iterator, num_views):
+    def __init__(self, model, iterator, num_views=8, device="cuda"):
         self._model = model
         self._iterator = iterator
         self.num_views = num_views
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def save_waveform(self, waveform, directory=None):
         scaled = np.int16(waveform[0, 0] / np.max(np.abs(waveform[0, 0])) * 32767)
@@ -62,7 +64,7 @@ class TestModel:
         valid_originals = torch.reshape(valid_originals, (valid_originals.shape[0] * valid_originals.shape[1],
                                                           valid_originals.shape[2], valid_originals.shape[3]))
         valid_originals = torch.unsqueeze(valid_originals, 1)
-
+        print(self.device)
         valid_originals = valid_originals.to(self.device)
 
         valid_encodings = self._model.encoder(valid_originals)
@@ -169,9 +171,9 @@ class TrainModel:
                 dict = {"loss": loss.item()}
                 self.wandb_logging(dict)
 
-                if (i + 1) % 50 == 0:
+                if (i + 1) % 4 == 0:
                     try:
-                        test_ = TestModel(self._model, iterator, 8)
+                        test_ = TestModel(self._model, iterator, 8, torch.device("cuda"))
                         # torch.save(model.state_dict(),f'model_{epoch}_{i}.pkl')
                         originals, reconstructions, encodings, labels, test_error = test_.reconstruct()
                         fig = test_.plot_reconstructions(originals, reconstructions, 8)
