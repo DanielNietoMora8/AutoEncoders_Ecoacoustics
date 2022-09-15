@@ -15,7 +15,7 @@ class AE_Clustering:
 
     def labeling(self, label, repetitions: int = 4, axes: int = 0):
         le = preprocessing.LabelEncoder()
-        labela = np.array(label)
+        labels = np.array(label)
         labels= np.repeat(label, repetitions, axes)
         le.fit(labels)
         labels = le.transform(labels)

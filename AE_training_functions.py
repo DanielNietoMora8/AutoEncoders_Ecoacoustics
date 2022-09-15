@@ -93,7 +93,7 @@ class TestModel:
                 dir_ori = directory + "original_"
                 dir_recon = directory + "reconstruction_"
                 self.save_waveform(wave_original, dir_ori)
-                self.save_waveform(wave_reconsctruction, dir_recon)
+                self.save_waveform(wave_reconstruction, dir_recon)
 
         return originals, reconstructions, encodings, label, error
 
