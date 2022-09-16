@@ -106,12 +106,12 @@ class TrainModel:
         self._model = model
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def wandb_init(self, config, keys=["audio_length", "win_length", "batch_size"]):
+    def wandb_init(self, config, keys=["batch_size", "num_hiddens"]):
         try:
             run_name = "AE_"
             for key in keys:
                 if key in config.keys():
-                    run_name = run_name + key + ":" + str(config[key]) + "_"
+                    run_name = run_name + key + "_" + str(config[key]) + "_"
                 else:
                     run_name = run_name + str(key)
 
@@ -171,9 +171,9 @@ class TrainModel:
                 dict = {"loss": loss.item()}
                 self.wandb_logging(dict)
 
-                if (i + 1) % 4 == 0:
+                if (i + 1) % 50 == 0:
                     try:
-                        test_ = TestModel(self._model, iterator, 8, torch.device("cuda"))
+                        test_ = TestModel(self._model, iterator, 8, device=torch.device("cuda"))
                         # torch.save(model.state_dict(),f'model_{epoch}_{i}.pkl')
                         originals, reconstructions, encodings, labels, test_error = test_.reconstruct()
                         fig = test_.plot_reconstructions(originals, reconstructions, 8)
@@ -187,21 +187,21 @@ class TrainModel:
                 else:
                     pass
 
-                if loss < 0.05:
+                if loss < 0.04:
                     wandb.alert(
                         title='High accuracy',
-                        text=f'Recon error {loss} is lower than 0.05',
+                        text=f'Recon error {loss} is lower than 0.04',
                         level=AlertLevel.WARN,
-                        wait_duration=timedelta(minutes=5)
+                        wait_duration=timedelta(minutes=1)
                     )
-                    torch.save(self._model.state_dict(), f'{run_name}_low_error.pkl')
+                    torch.save(self._model.state_dict(), f'{run_name}_day_{time.day}_hour_{time.hour}_low_error.pkl')
                 else:
                     pass
 
             scheduler.step()
             torch.cuda.empty_cache()
             time = datetime.datetime.now()
-            torch.save(self._model.state_dict(), f'{run_name}_epoch:{epoch + 1}_{time.day}_{time.hour}.pkl')
+            torch.save(self._model.state_dict(), f'{run_name}_day_{time.day}_hour_{time.hour}_epoch_{epoch + 1}.pkl')
             # output.clear()
             print(optimizer.state_dict()["param_groups"][0]["lr"])
 
