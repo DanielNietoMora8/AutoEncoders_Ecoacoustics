@@ -10,6 +10,7 @@ import torchaudio.transforms as audio_transform
 import torch.nn.functional as F
 import wandb
 from wandb import AlertLevel
+import datetime
 from datetime import timedelta
 
 
@@ -53,7 +54,7 @@ class TestModel:
         output = torch.cat((imgs_original[0:self.num_views], imgs_reconstruction[0:self.num_views]), 0)
         img_grid = make_grid(output, nrow=self.num_views, pad_value=20)
         fig, ax = plt.subplots(figsize=(20, 5))
-        ax.imshow(img_grid[1, :, :].cpu(), vmin=0, vmax=0.02, origin="lower")
+        ax.imshow(img_grid[1, :, :].cpu(), vmin=0, vmax=1, origin="lower")
         ax.axis("off")
         plt.show()
         return fig

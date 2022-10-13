@@ -4,7 +4,8 @@ from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
 import numpy as np
-import torch 
+import torch
+from sklearn import metrics
 
 class AE_Clustering:
 
@@ -61,5 +62,6 @@ class AE_Clustering:
             mbk_means_labels = self.kmeans.predict(encodings)
             X_embedded = TSNE(n_components=2, learning_rate='auto', init='random', random_state=0).fit_transform(encodings)
             print(X_embedded.shape)
+            metrics.silhouette_score(X_embedded, mbk_means_labels)
             self.plot_clusters(X_embedded, mbk_means_labels, labels)
         return self.kmeans
