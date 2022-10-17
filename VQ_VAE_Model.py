@@ -46,7 +46,7 @@ class Encoder(nn.Module):
         # print(f"pooling2: {x.shape}")
 
         x = self._conv_3(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x)
         # print(f"conv3: {x.shape}")
 
         # x = self._conv_4(x)

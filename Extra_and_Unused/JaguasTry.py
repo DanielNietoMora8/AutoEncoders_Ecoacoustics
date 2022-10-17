@@ -35,6 +35,8 @@ record = record[:, :1300950]
 record = record[:, :audio_len * (record.shape[1] // audio_len)]
 record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
 
+
+#%%
 base_win = 256
 win_length = 2047
 hop = int(np.round(base_win/win_length * 172.3 * 59))
@@ -69,10 +71,22 @@ plt.show()
 import matplotlib.pyplot as plt
 y, sr = librosa.load(librosa.ex('choice'), duration=25)
 fig, ax = plt.subplots()
-D = librosa.amplitude_to_db(np.abs(librosa.stft(y,n_fft=512, hop_length=8)), ref=np.max)
+D = librosa.amplitude_to_db(np.abs(librosa.stft(y, n_fft=512, hop_length=8)), ref=np.max)
 img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
                                sr=sr, ax=ax)
 ax.set(title='Linear-frequency power spectrogram')
 ax.label_outer()
 print(D.shape)
 plt.show()
+
+#%%
+
+y, sr = librosa.load(files[0], duration=12)
+D = librosa.stft(y, n_fft=1028, hop_length=514)
+H, P = librosa.decompose.hpss(D)
+
+y_harm = librosa.istft(H)
+y_perc = librosa.istft(P)
+spec_H = torch.from_numpy(H)
+spec_P = torch.from_numpy(P)
+

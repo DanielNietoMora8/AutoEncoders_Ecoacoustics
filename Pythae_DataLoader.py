@@ -59,7 +59,13 @@ class SoundscapeData(Dataset):
         """
         path_index = self.files[index]
         label = str(path_index).split("/")[-2]
-        record, sr = torchaudio.load(path_index)
+        record = None
+        while(record == None):
+            try:
+                record, sr = torchaudio.load(path_index, normalize=True)
+            except:
+                print(f"corruptued: path_index")
+                index += 1
         resampling = 22050
         audio_len = self.audio_length * resampling
         record = torch.mean(record, dim=0, keepdim=True)
