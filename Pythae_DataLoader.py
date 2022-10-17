@@ -5,6 +5,7 @@ import os
 import numpy as np
 from pathlib import Path
 from torch.utils.data import Dataset
+from pythae.data.datasets import DatasetOutput
 
 
 class SoundscapeData(Dataset):
@@ -58,7 +59,13 @@ class SoundscapeData(Dataset):
         """
         path_index = self.files[index]
         label = str(path_index).split("/")[-2]
-        record, sr = torchaudio.load(path_index)
+        record = None
+        while(record == None):
+            try:
+                record, sr = torchaudio.load(path_index, normalize=True)
+            except:
+                print(f"corruptued: path_index")
+                index += 1
         resampling = 22050
         audio_len = self.audio_length * resampling
         record = torch.mean(record, dim=0, keepdim=True)
@@ -67,24 +74,21 @@ class SoundscapeData(Dataset):
         record = record[:, :audio_len * (record.shape[1] // audio_len)]
         record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
         win_length = self.win_length
-        base_win = 256
+        # base_win = 256
         # hop = int(np.round(base_win/win_length * 172.3 * self.audio_length))  # (256, 1.5) (512,5.94) (1024,24)
-        hop = win_length // 2
+        # hop = win_length // 2
         nfft = int(np.round(1*win_length))
         spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                                  window_fn=torch.hamming_window,
                                                  power=2,
                                                  normalized=False)(record)
         spec = torch.log1p(spec)
-        # label = np.array(label)
-        # label = np.repeat(label, 4, 0)
-        # spec = torch.unsqueeze(spec, dim=1)
-        # db = F.AmplitudeToDB(top_db=80)
-        # # print(record.shape)
-        # spec = db(spec)
-        # spec = torch.squeeze(spec, dim=1)
-        # print(spec.shape)
-        return spec, record, label
+        spec = spec[0]
+        spec = spec.unsqueeze(dim=0)
+
+
+        return DatasetOutput(data=spec)
+        # {"data": spec, "redord": record, "labels": label}
 
     def __len__(self):
 
