@@ -3,68 +3,57 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-
-class Encoder(nn.Module):
-    def __init__(self, in_channels, num_hiddens):
-        super(Encoder, self).__init__()
-
-        self._conv_1 = nn.Conv2d(in_channels=in_channels,
-                                 out_channels=num_hiddens // 4,
-                                 kernel_size=(3, 3),
-                                 stride=(2, 2), padding=(0, 0))
-
-        self._conv_2 = nn.Conv2d(in_channels=num_hiddens // 4,
-                                 out_channels=num_hiddens,
-                                 kernel_size=(3, 3),
-                                 stride=(2, 2), padding=(0, 0))
-
-        self.pooling = nn.MaxPool2d(2)
-
-    def forward(self, inputs):
-
-        # print("Working with new encoder")
-        print(f"inputs:{inputs.shape}")
-        x = self._conv_1(inputs)
-        x = F.leaky_relu(x)
-
-        x = self._conv_2(x)
-        x = F.leaky_relu(x)
-
-        return x
+from pythae.models.nn import BaseDecoder
+from pythae.models.base.base_utils import ModelOutput
+from pythae.models.nn import BaseEncoder
+from pythae.models.base.base_utils import ModelOutput
 
 
-class Decoder(nn.Module):
-    def __init__(self, embedding_dim, num_hiddens):
-        super(Decoder, self).__init__()
+class My_encoder(BaseEncoder):
 
-        self._conv_trans_1 = nn.ConvTranspose2d(in_channels=num_hiddens,
-                                                out_channels=num_hiddens // 4,
-                                                kernel_size=(3, 3),
-                                                stride=(2, 2), padding=(0, 0),  output_padding=(0, 0))
+    def __init__(self, num_hiddens: int=64):
+        BaseEncoder.__init__(self)
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, num_hiddens // 8, kernel_size=8, stride=3, padding=0),  # N, 256, 127, 8004
+            nn.ReLU(),
+            nn.Conv2d(num_hiddens // 8, num_hiddens // 4, kernel_size=8, stride=3, padding=0),  # N, 512, 125,969
+            nn.ReLU(),
+            nn.Conv2d(num_hiddens // 4, num_hiddens // 2, kernel_size=4, stride=3, padding=0),  # N, 512, 125,969
+            nn.ReLU(),
+            nn.Conv2d(num_hiddens // 2, num_hiddens, kernel_size=2, stride=2, padding=0),  # N, 512, 125,969
+            nn.ReLU()
+        )
 
-        self._conv_trans_2 = nn.ConvTranspose2d(in_channels=num_hiddens // 4,
-                                                out_channels=1,
-                                                kernel_size=(3, 3),
-                                                stride=(2, 2), padding=(0, 0), output_padding=(0, 0))
+    def forward(self, x: torch.Tensor):
+        embedding = self.encoder(x)
+        output = ModelOutput(
+            embedding=embedding,
+            # log_covariance=log_var # for VAE based models
+        )
+        return output
 
-        self.dropout = nn.Dropout2d(p=0.2)
 
-        self.transpooling = nn.MaxUnpool2d(2)
+class My_decoder(BaseDecoder):
 
-        self.Sigmoid = nn.Sigmoid()
-        self.Tanh = nn.Tanh()
+    def __init__(self, in_channels=1, num_hiddens: int = 64):
+        BaseDecoder.__init__(self)
+        self.decoder = nn.Sequential(  # This is like go in opposite direction respect the encoder
+            nn.ConvTranspose2d(num_hiddens, num_hiddens // 2, kernel_size=2, stride=2, padding=0, output_padding=0),
+            nn.ReLU(),
+            nn.ConvTranspose2d(num_hiddens // 2, num_hiddens // 4, kernel_size=4, stride=3, padding=0,
+                               output_padding=0),
+            nn.ReLU(),
+            nn.ConvTranspose2d(num_hiddens // 4, num_hiddens // 8, kernel_size=8, stride=3, padding=0,
+                               output_padding=0),
+            nn.ReLU(),
+            nn.ConvTranspose2d(num_hiddens // 8, 1, kernel_size=8, stride=3, padding=0, output_padding=0),
+            nn.Sigmoid()
+        )
 
-    def forward(self, inputs):
+    def forward(self, z: torch.Tensor):
+           reconstruction = self.decoder(z)
+           output = ModelOutput(
+                reconstruction=reconstruction
+            )
+           return output
 
-        #print("Working with new decoder")
-
-        x = self._conv_trans_1(inputs)
-        x = F.leaky_relu(x)
-
-        x = self._conv_trans_2(x)
-        # x = F.leaky_relu(x)
-        # print(f"convtr6: {x.shape}")
-
-        x = self.Sigmoid(x)
-
-        return x

@@ -78,7 +78,7 @@ class SoundscapeData(Dataset):
         # spec_h = torch.log1p(torch.from_numpy(h))
         # spec_p = torch.log1p(torch.from_numpy(p))
 
-        return h, record, label
+        return p, record, label
 
     def __len__(self):
 
