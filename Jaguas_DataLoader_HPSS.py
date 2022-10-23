@@ -60,26 +60,20 @@ class SoundscapeData(Dataset):
         label = str(path_index).split("/")[-2]
         record, sr = librosa.load(path_index, duration=self.audio_length, mono=True)
         resampling = 22050
-        record = librosa.resample(record, orig_sr=sr, target_sr=22050)
+        record = librosa.resample(record, orig_sr=sr, target_sr=resampling)
         win_length = self.win_length
         nfft = int(np.round(1*win_length))
         spec = librosa.amplitude_to_db(np.abs(librosa.stft(record, n_fft=nfft, hop_length=nfft//2)),
                                        ref=np.max)
+        h, p = librosa.decompose.hpss(spec)
         #spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
         #                                          window_fn=torch.hamming_window,
         #                                          power=2,
         #                                          normalized=False)(record)
-        spec_H = torch.log1p(torch.from_numpy(H))
-        spec_P = torch.log1p(torch.from_numpy(P))
-        # label = np.array(label)
-        # label = np.repeat(label, 4, 0)
-        # spec = torch.unsqueeze(spec, dim=1)
-        # db = F.AmplitudeToDB(top_db=80)
-        # # print(record.shape)
-        # spec = db(spec)
-        # spec = torch.squeeze(spec, dim=1)
-        # print(spec.shape)
-        return spec_H, spec_P, record, label
+        spec_h = torch.log1p(torch.from_numpy(h))
+        spec_p = torch.log1p(torch.from_numpy(p))
+
+        return spec_h, spec_p, record, label
 
     def __len__(self):
 
