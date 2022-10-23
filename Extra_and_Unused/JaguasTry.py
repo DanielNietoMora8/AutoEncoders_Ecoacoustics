@@ -81,12 +81,22 @@ plt.show()
 
 #%%
 
-y, sr = librosa.load(files[0], duration=12)
-D = librosa.stft(y, n_fft=1028, hop_length=514)
-H, P = librosa.decompose.hpss(D)
+record, sr = librosa.load(files[0], duration=12)
+resampling = 22050
+record = librosa.resample(record, orig_sr=sr, target_sr=resampling)
+win_length = 1028
+nfft = int(np.round(1*win_length))
+spec = (np.abs(librosa.stft(record, n_fft=nfft, hop_length=nfft//2)))
+print(spec)
+h, p = librosa.decompose.hpss(spec)
+print(type(h))
+h = np.expand_dims(h, axis=0)
+p = np.expand_dims(p, axis=0)
+h = torch.from_numpy(h)
+p = torch.from_numpy(p)
 
-y_harm = librosa.istft(H)
-y_perc = librosa.istft(P)
-spec_H = torch.from_numpy(H)
-spec_P = torch.from_numpy(P)
+# y_harm = librosa.istft(h)
+# y_perc = librosa.istft(p)
+# spec_H = torch.from_numpy(h)
+# spec_P = torch.from_numpy(p)
 

@@ -109,7 +109,7 @@ class TrainModel:
 
     def wandb_init(self, config, keys=["batch_size", "num_hiddens"]):
         try:
-            run_name = "AE_"
+            run_name = str(config["architecture"]+"_")
             for key in keys:
                 if key in config.keys():
                     run_name = run_name + key + "_" + str(config[key]) + "_"
@@ -139,10 +139,10 @@ class TrainModel:
         optimizer = config["optimizer"]
         scheduler = config["scheduler"]
 
-        train_res_recon_error = []
-        train_res_perplexity = []
+        # train_res_recon_error = []
+        # train_res_perplexity = []
         logs = []
-        best_loss = 10000
+        # best_loss = 10000
 
         for epoch in range(config["num_epochs"]):
             iterator_train = iter(training_loader)
