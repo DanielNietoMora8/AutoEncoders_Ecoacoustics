@@ -56,8 +56,8 @@ class AE_Clustering:
             encodings = encodings.reshape(216,
                                         encodings.shape[1]*encodings.shape[2]*encodings.shape[3])
             self.kmeans = self.kmeans.partial_fit(encodings)
-            embedding = self.kmeans.transform(encodings)
-            mbk_means_cluster_centers = self.kmeans.cluster_centers_
+            # embedding = self.kmeans.transform(encodings)
+            # mbk_means_cluster_centers = self.kmeans.cluster_centers_
             # mbk_means_labels = pairwise_distances_argmin(encodings, mbk_means_cluster_centers)
             mbk_means_labels = self.kmeans.predict(encodings)
             X_embedded = TSNE(n_components=2, learning_rate='auto', init='random', random_state=0).fit_transform(encodings)
