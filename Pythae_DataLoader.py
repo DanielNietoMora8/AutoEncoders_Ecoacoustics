@@ -86,7 +86,6 @@ class SoundscapeData(Dataset):
         spec = spec[0]
         spec = spec.unsqueeze(dim=0)
 
-
         return DatasetOutput(data=spec)
         # {"data": spec, "redord": record, "labels": label}
 
