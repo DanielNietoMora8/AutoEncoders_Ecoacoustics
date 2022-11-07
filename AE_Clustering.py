@@ -98,9 +98,10 @@ class AE_Clustering:
         ax1.axvline(x=silhouette_avg, color="red", linestyle="--")
 
         ax1.set_yticks([])  # Clear the yaxis labels / ticks
-        ax1.set_xticks([-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
+        ax1.set_xticks([-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0,
+                        0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
         print("Ya debio plotear")
-        plt.savefig("Clustering_Results/Figures/Clustering_plot")
+        plt.savefig(f"Clustering_Results/Figures/Clustering_plot{n_clusters}.pdf", format="pdf")
         plt.show()
 
     def plot_centroids(self):
@@ -158,9 +159,9 @@ class AE_Clustering:
                 print("plotting silhouette graph")
                 self.plot_silhouette(encodings, mbk_means_labels, self._n_clusters, silhouette_score_TSNE[id])
             else:
-                print("nothing to plot")
+                pass
 
-            with open(f"Clustering_Results/Results/silhouette_{self._n_clusters}") as file:
+            with open(f"Clustering_Results/Results/silhouette_n-clusters: {self._n_clusters}_id: {id}", "wb") as file:
                 pkl.dump(silhouette_score_TSNE, file)
 
         return self.kmeans
