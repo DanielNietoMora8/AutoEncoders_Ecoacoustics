@@ -16,19 +16,19 @@ cuda = torch.device('cuda:0')
 torch.cuda.empty_cache()
 device = torch.device(cuda if torch.cuda.is_available() else "cpu")
 
-root_path = "G:/Unidades compartidas/ConservacionBiologicaIA/Datos/Porce_2019"
+root_path = "G:/Unidades compartidas/ConservacionBiologicaIA/Datos/Jaguas_2018"
 folders = os.listdir(root_path)
 print(len(folders))
 files = []
 
 for i in range(len(folders)):
     path = Path(root_path+'/'+folders[i])
-    files += list(Path(path).rglob("*.{}".format("wav")))
+    files += list(Path(path).rglob("*.{}".format("WAV")))
 
 print("p1")
 print(files[0])
-record, sr = torchaudio.load(files[0])
-audio_len = 59 * 22050
+record, sr = torchaudio.load(files[29])
+audio_len = 12 * 22050
 record = torch.mean(record, dim=0, keepdim=True)
 record = torchaudio.transforms.Resample(sr, 22050)(record)
 record = record[:, :1300950]
@@ -44,9 +44,8 @@ hop = int(np.round(base_win/win_length * 172.3 * 59))
 nfft = int(np.round(1*win_length))
 
 
-sxx = torchaudio.transforms.Spectrogram(n_fft=nfft,
-                                        win_length=win_length,
-                                        hop_length=hop,
+sxx = torchaudio.transforms.Spectrogram(n_fft=1028,
+                                        win_length=1028,
                                         window_fn=torch.hamming_window,
                                         power=2,
                                         normalized=False,
@@ -65,13 +64,11 @@ plt.show()
 
 plt.figure()
 plt.imshow(S_db)
-plt.show()
-
-#%%
+plt.show()#%%
 import matplotlib.pyplot as plt
 y, sr = librosa.load(librosa.ex('choice'), duration=25)
 fig, ax = plt.subplots()
-D = librosa.amplitude_to_db(np.abs(librosa.stft(y, n_fft=512, hop_length=8)), ref=np.max)
+D = librosa.amplitude_to_db(np.abs(librosa.stft(record_2[0], n_fft=512, hop_length=8)), ref=np.max)
 img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
                                sr=sr, ax=ax)
 ax.set(title='Linear-frequency power spectrogram')
@@ -81,19 +78,29 @@ plt.show()
 
 #%%
 
-record, sr = librosa.load(files[0], duration=12)
+record, sr = librosa.load(files[104], duration=12)
 resampling = 22050
 record = librosa.resample(record, orig_sr=sr, target_sr=resampling)
 win_length = 1028
 nfft = int(np.round(1*win_length))
-spec = (np.abs(librosa.stft(record, n_fft=nfft, hop_length=nfft//2)))
+spec = (np.abs(librosa.stft(record, n_fft=1028, hop_length=nfft//2)))
 print(spec)
 h, p = librosa.decompose.hpss(spec)
 print(type(h))
 h = np.expand_dims(h, axis=0)
 p = np.expand_dims(p, axis=0)
+spec = np.expand_dims(spec, axis=0)
 h = torch.from_numpy(h)
 p = torch.from_numpy(p)
+plt.figure()
+plt.imshow(spec[0], origin="lower", vmin=0, vmax=2)
+plt.show()
+plt.figure()
+plt.imshow(h[0], origin="lower", vmin=0, vmax=2)
+plt.show()
+plt.figure()
+plt.imshow(p[0], origin="lower", vmin=0, vmax=2)
+plt.show()
 
 # y_harm = librosa.istft(h)
 # y_perc = librosa.istft(p)

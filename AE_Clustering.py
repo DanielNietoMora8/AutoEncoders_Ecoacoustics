@@ -101,7 +101,7 @@ class AE_Clustering:
         ax1.set_xticks([-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0,
                         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
         print("Ya debio plotear")
-        plt.savefig(f"Clustering_Results/Figures/Clustering_plot_TSNE_{n_clusters}.pdf", format="pdf")
+        plt.savefig(f"Clustering_Results/Figures/Clustering_plot_{n_clusters}.pdf", format="pdf")
         plt.show()
 
     def plot_centroids(self):
@@ -112,7 +112,7 @@ class AE_Clustering:
             encodings = torch.tensor(encodings).float()
             decodings = self._ae_testing._model.decoder(encodings).detach().numpy()
             plt.subplot(9, 9, i + 1)
-            plt.imshow(decodings[0, :, :], cmap="viridis", interpolation="nearest", vmin=0, vmax=1)
+            plt.imshow(decodings[0, :, :], origin="lower", cmap="viridis", interpolation="nearest", vmin=0, vmax=1)
             plt.xticks(())
             plt.yticks(())
 
@@ -148,7 +148,7 @@ class AE_Clustering:
             # reducer = umap.UMAP()
             # X_embedded_UMAP = reducer.fit_transform(encodings)
 
-            silhouette_score_TSNE.append(metrics.silhouette_score(X_embedded_TSNE, mbk_means_labels))
+            silhouette_score_TSNE.append(metrics.silhouette_score(encodings, mbk_means_labels))
             print(silhouette_score_TSNE[id])
             if (id+1) % plot_clusters_period == 0:
                 self.plot_clusters(X_embedded_TSNE, mbk_means_labels, labels)
@@ -156,12 +156,12 @@ class AE_Clustering:
             else:
                 pass
             if (id+1) % 59 == 0:
-                print("plotting silhouette graph TSNE Embedded")
-                self.plot_silhouette(X_embedded_TSNE, mbk_means_labels, self._n_clusters, silhouette_score_TSNE[id])
+                print("plotting silhouette graph Embedded")
+                self.plot_silhouette(encodings, mbk_means_labels, self._n_clusters, silhouette_score_TSNE[id])
             else:
                 pass
 
-        with open(f"Clustering_Results/Results/silhouette_n-clusters_TSNE: {self._n_clusters}_id: {id}", "wb") as file:
+        with open(f"Clustering_Results/Results/silhouette_n-clusters: {self._n_clusters}_id: {id}", "wb") as file:
             pkl.dump(silhouette_score_TSNE, file)
 
         return self.kmeans
