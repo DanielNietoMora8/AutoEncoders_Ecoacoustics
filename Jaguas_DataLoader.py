@@ -1,5 +1,4 @@
 import torch
-import torchaudio.transforms as F
 import torchaudio
 import os
 import numpy as np
@@ -57,7 +56,13 @@ class SoundscapeData(Dataset):
 
         """
         path_index = self.files[index]
-        label = str(path_index).split("/")[-2]
+        recorder = str(path_index).split("/")[-2]
+        recorder = int(recorder[1:3])
+        hour = int(str(path_index).split("/")[-1].split("_")[2].split(".")[0][0:2])
+        minute = int(str(path_index).split("/")[-1].split("_")[2].split(".")[0][2:4])
+        second = int(str(path_index).split("/")[-1].split("_")[2].split(".")[0][4:6])
+        label = {"recorder": recorder, "hour": hour, "minute": minute, "second": second}
+
         record, sr = torchaudio.load(path_index)
         resampling = 22050
         audio_len = self.audio_length * resampling
@@ -67,28 +72,22 @@ class SoundscapeData(Dataset):
         record = record[:, :audio_len * (record.shape[1] // audio_len)]
         record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
         win_length = self.win_length
-        base_win = 256
-        # hop = int(np.round(base_win/win_length * 172.3 * self.audio_length))  # (256, 1.5) (512,5.94) (1024,24)
-        hop = win_length // 2
         nfft = int(np.round(1*win_length))
         spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                                  window_fn=torch.hamming_window,
                                                  power=2,
                                                  normalized=False)(record)
-        spec = torch.log1p(spec)
-        # print(f"spec1: {spec.shape}")
+
         spec = spec[0]
+        spec = torch.log1p(spec)
         spec = torch.unsqueeze(spec, 0)
         # print(f"spec2: {spec.shape}")
-        # label = np.array(label)
-        # label = np.repeat(label, 4, 0)
         # spec = torch.unsqueeze(spec, dim=1)
         # db = F.AmplitudeToDB(top_db=80)
         # # print(record.shape)
         # spec = db(spec)
         # spec = torch.squeeze(spec, dim=1)
-        # print(spec.shape)
-        return spec, record, label
+        return spec, record[0], label
 
     def __len__(self):
 

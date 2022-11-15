@@ -50,11 +50,11 @@ class TestModel:
             plt.xticks(fontsize=16)
             plt.yticks(fontsize=16)
 
-    def plot_reconstructions(self, imgs_original, imgs_reconstruction, num_views: int = 8):
+    def plot_reconstructions(self, imgs_original, imgs_reconstruction):
         output = torch.cat((imgs_original[0:self.num_views], imgs_reconstruction[0:self.num_views]), 0)
         img_grid = make_grid(output, nrow=self.num_views, pad_value=20)
         fig, ax = plt.subplots(figsize=(20, 5))
-        ax.imshow(img_grid[1, :, :].cpu(), vmin=0, vmax=1, origin="lower")
+        ax.imshow(img_grid[1, :, :].cpu(), origin="lower", vmin=0, vmax=1)
         ax.axis("off")
         plt.show()
         return fig
@@ -148,7 +148,7 @@ class TrainModel:
             for i in xrange(config["num_training_updates"]):
                 self._model.train()
                 try:
-                    (data, _, _) = next(iterator_train)
+                    data, _, _ = next(iterator_train)
                 except Exception as e:
                     print("error")
                     print(e)
@@ -171,17 +171,17 @@ class TrainModel:
                 dict = {"loss": loss.item()}
                 self.wandb_logging(dict)
 
-                if (i + 1) % 50 == 0:
+                if (i + 1) % 20 == 0:
                     try:
                         test_ = TestModel(self._model, iterator, 8, device=torch.device("cuda"))
                         # torch.save(model.state_dict(),f'model_{epoch}_{i}.pkl')
                         originals, reconstructions, encodings, labels, test_error = test_.reconstruct()
-                        fig = test_.plot_reconstructions(originals, reconstructions, 8)
+                        fig = test_.plot_reconstructions(originals, reconstructions)
                         images = wandb.Image(fig, caption=f"recon_error: {np.round(test_error.item(), 4)}")
-                        self.wandb_logging({"examples": images, "step": i + 1 // 50})
+                        self.wandb_logging({"examples": images, "step": i + 1 // 20})
 
                     except Exception as e:
-                        print("error")
+                        print(f"error; {e}")
                         logs.append(e)
                         continue
                 else:
@@ -194,6 +194,7 @@ class TrainModel:
                         level=AlertLevel.WARN,
                         wait_duration=timedelta(minutes=1)
                     )
+                    time = datetime.datetime.now()
                     torch.save(self._model.state_dict(), f'{run_name}_day_{time.day}_hour_{time.hour}_low_error.pkl')
                 else:
                     pass

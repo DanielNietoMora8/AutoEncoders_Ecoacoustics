@@ -288,3 +288,4 @@ cython_debug/
 /Clustering_Results/
 /Extra_and_Unused/Dataloader_test.py
 /Extra_and_Unused/label_encoder.py
+/Extra_and_Unused/Wavelet_test.py
