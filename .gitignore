@@ -285,3 +285,6 @@ cython_debug/
 /Extra_and_Unused/temp.py
 /Images/
 /Extra_and_Unused/Spectral_Centroid.py
+/Clustering_Results/
+/Extra_and_Unused/Dataloader_test.py
+/Extra_and_Unused/label_encoder.py

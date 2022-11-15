@@ -115,7 +115,7 @@ def Spectrogram(files: list, module: str = "librosa", sr: int = 48000, n_fft: in
             record, sr = torchaudio.load(str(i))
             spec = torchaudio.transforms.Spectrogram(n_fft=n_fft)(record)
             plt.figure()
-            plt.imshow(spec.log2()[0, :].numpy())
+            plt.imshow(spec.log1()[0, :].numpy())
             plt.show()
 
     else:
@@ -127,7 +127,7 @@ def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', 
     axs.set_ylabel(ylabel)
     axs.set_xlabel('frame')
     axs.set_axis_off()
-    axs.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect)
+    axs.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect, cmap="inferno")
     if xmax:
         axs.set_xlim((0, xmax))
     # fig.colorbar(im, ax=axs)

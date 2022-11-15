@@ -65,7 +65,6 @@ class TestModel:
         valid_originals = torch.reshape(valid_originals, (valid_originals.shape[0] * valid_originals.shape[1],
                                                           valid_originals.shape[2], valid_originals.shape[3]))
         valid_originals = torch.unsqueeze(valid_originals, 1)
-        print(self.device)
         valid_originals = valid_originals.to(self.device)
 
         valid_encodings = self._model.encoder(valid_originals)
