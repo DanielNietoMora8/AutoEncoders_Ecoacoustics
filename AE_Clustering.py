@@ -11,6 +11,8 @@ from sklearn import metrics
 from sklearn.metrics import silhouette_samples
 import pickle as pkl
 
+
+
 class AE_Clustering:
 
     def __init__(self, AE_testing, dataset, n_clusters: int = 27):

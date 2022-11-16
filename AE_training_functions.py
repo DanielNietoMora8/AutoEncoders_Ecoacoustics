@@ -1,10 +1,8 @@
 from scipy.io.wavfile import write
 from six.moves import xrange
 import torch
-import torchvision
 import matplotlib.pyplot as plt
 import numpy as np
-import torchvision.transforms as transforms
 from torchvision.utils import make_grid
 import torchaudio.transforms as audio_transform
 import torch.nn.functional as F
