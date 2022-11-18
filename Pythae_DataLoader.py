@@ -1,6 +1,6 @@
 import torch
-import torchaudio.transforms as F
 import torchaudio
+from sklearn import preprocessing
 import os
 import numpy as np
 from pathlib import Path
@@ -59,13 +59,19 @@ class SoundscapeData(Dataset):
         """
         path_index = self.files[index]
         label = str(path_index).split("/")[-2]
+        le = preprocessing.LabelEncoder()
+        labels = np.array(label)
+        le.fit(labels)
+        labels = le.transform(labels)
+
         record = None
         while(record == None):
             try:
-                record, sr = torchaudio.load(path_index, normalize=True)
+                record, sr = torchaudio.load(path_index, normalize=False)
             except:
-                print(f"corruptued: path_index")
+                print(f"corruptued:{path_index}")
                 index += 1
+
         resampling = 22050
         audio_len = self.audio_length * resampling
         record = torch.mean(record, dim=0, keepdim=True)
@@ -81,7 +87,7 @@ class SoundscapeData(Dataset):
         spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                                  window_fn=torch.hamming_window,
                                                  power=2,
-                                                 normalized=False)(record)
+                                                 normalized=True)(record)
         spec = torch.log1p(spec)
         spec = spec[0]
         spec = spec.unsqueeze(dim=0)

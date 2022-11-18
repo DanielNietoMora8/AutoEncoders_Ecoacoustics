@@ -4,13 +4,8 @@ import torch
 import torchaudio
 import numpy as np
 from Modules.Utils import plot_spectrogram
-from torch.utils.data import DataLoader
-from Jaguas_DataLoader import SoundscapeData
 from pathlib import Path
-import sounddevice as sd
-import librosa
 import librosa.display
-import cv2
 
 cuda = torch.device('cuda:0')
 torch.cuda.empty_cache()

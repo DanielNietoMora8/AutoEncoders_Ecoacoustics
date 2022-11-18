@@ -103,6 +103,8 @@ class TrainModel:
     def __init__(self, model):
         self._model = model
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._model.to(self.device)
+        print(self.device)
 
     def wandb_init(self, config, keys=["batch_size", "num_hiddens"]):
         try:

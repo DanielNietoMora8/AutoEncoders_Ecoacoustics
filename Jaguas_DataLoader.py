@@ -28,13 +28,20 @@ class SoundscapeData(Dataset):
         :param ext: Audios extension (ex: .wav)
         """
 
+        if 'google.colab' in str(get_ipython()):
+            dir_root = "/content/drive/Shareddrives/"
+        else:
+            dir_root = "G:/Unidades compartidas/"
+
         self.audio_length = audio_length
-        self.root_path = root_path
+        self.root_path = dir_root+root_path
+        print(self.root_path)
         self.win_length = win_length
-        self.folders = os.listdir(root_path)
+        self.folders = os.listdir(self.root_path)
         self.files = []
+
         for i in range(len(self.folders)):
-            path_aux = "{}/{}".format(root_path, self.folders[i])
+            path_aux = "{}/{}".format(self.root_path, self.folders[i])
             self.files += list(Path(path_aux).rglob("*.{}".format(ext)))
 
     def __getitem__(self, index):
@@ -55,12 +62,17 @@ class SoundscapeData(Dataset):
             :type features: Dataframe.
 
         """
+        if 'google.colab' in str(get_ipython()):
+            delimiter = "/"
+        else:
+            delimiter = "\\"
+
         path_index = self.files[index]
-        recorder = str(path_index).split("/")[-2]
+        recorder = str(path_index).split(delimiter)[-2]
         recorder = int(recorder[1:3])
-        hour = int(str(path_index).split("/")[-1].split("_")[2].split(".")[0][0:2])
-        minute = int(str(path_index).split("/")[-1].split("_")[2].split(".")[0][2:4])
-        second = int(str(path_index).split("/")[-1].split("_")[2].split(".")[0][4:6])
+        hour = int(str(path_index).split(delimiter)[-1].split("_")[2].split(".")[0][0:2])
+        minute = int(str(path_index).split(delimiter)[-1].split("_")[2].split(".")[0][2:4])
+        second = int(str(path_index).split(delimiter)[-1].split("_")[2].split(".")[0][4:6])
         label = {"recorder": recorder, "hour": hour, "minute": minute, "second": second}
 
         record, sr = torchaudio.load(path_index)

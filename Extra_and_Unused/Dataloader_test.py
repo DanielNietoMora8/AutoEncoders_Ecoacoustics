@@ -27,12 +27,12 @@ dataset_train, dataset_test = random_split(dataset,
 training_loader = DataLoader(dataset_train, batch_size=1)
 test_loader = DataLoader(dataset_test, batch_size=1)
 
-model_name = "AE_batch_size_14_num_hiddens_64__day_4_hour_1_epoch_3.pkl"
-config = torch.load(f'{root}\\Models\\config_AE_batch_size_14_num_hiddens_64__day_4_hour_1.pth')
+model_name = "AE_batch_size_56_num_hiddens_64__day_17_hour_0_final.pth"
+config = torch.load(f'{root}\\config_AE_batch_size_56_num_hiddens_64__day_17_hour_0.pth')
 model = AE(num_hiddens=config["num_hiddens"]).to(device)
-# dataset_test = torch.load(f'{root}\\temporal\\dataset_test_ae_jaguas')
-# dataset_train = torch.load(f'{root}\\temporal\\dataset_train_ae_jaguas')
-model.load_state_dict(torch.load(f'{root}\\Models\\{model_name}', map_location=torch.device('cpu')))
+dataset_test = torch.load(f'{root}\\temporal\\dataset_test_ae_jaguas_new')
+dataset_train = torch.load(f'{root}\\temporal\\dataset_train_ae_jaguas_new')
+model.load_state_dict(torch.load(f'{root}\\{model_name}', map_location=torch.device('cpu')))
 
 iterator = iter(training_loader)
 testing = TestModel(model, iterator, device=torch.device("cuda"))
@@ -40,6 +40,7 @@ originals, reconstructions, encodings, label, loss = testing.reconstruct()
 encodings_size = encodings[0].shape
 
 training_samples_list = []
+delete_samples = []
 training_samples_list_torch = torch.ones(6020, 5184).to("cuda")
 
 for id, item in enumerate(dataset_train):
@@ -49,6 +50,7 @@ for id, item in enumerate(dataset_train):
         originals, reconstructions, encodings, label, loss = testing.reconstruct()
     except:
         print(f"error id: {id}")
+        delete_samples.append(id)
         continue
 
     encodings_size = encodings[0].shape
@@ -58,6 +60,10 @@ for id, item in enumerate(dataset_train):
     encoding = encodings.squeeze(dim=0)
     # training_samples_list.append(encodings)
     training_samples_list_torch[id] = encodings
+    if id % 500 == 0:
+        torch.save(training_samples_list_torch, f"training_samples_list_torch_{id}.pth")
+
+
 torch.save(training_samples_list_torch, "training_samples_list_torch.pth")
 
 
