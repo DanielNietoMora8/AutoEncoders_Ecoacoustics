@@ -103,10 +103,10 @@ class AE_Clustering:
         ax1.set_xticks([-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0,
                         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
         print("Ya debio plotear")
-        plt.savefig(f"Clustering_Results/Figures/Clustering_plot_{n_clusters}.pdf", format="pdf")
-        plt.show()
+        # plt.savefig(f"Clustering_Results/Kmeans/Figures/Clustering_plot_{n_clusters}.pdf", format="pdf")
+        # plt.show()
 
-    def plot_centroids(self):
+    def plot_centroids(self, cluster_centers):
         plt.figure(figsize=(18, 18))
         self._ae_testing._model.to("cpu")
         for i, spec in enumerate(self.kmeans.cluster_centers_):
@@ -157,7 +157,7 @@ class AE_Clustering:
                 # self.plot_clusters(X_embedded_UMAP, mbk_means_labels, labels)
             else:
                 pass
-            if (id+1) % 59 == 0:
+            if (id+1) % 61 == 0:
                 print("plotting silhouette graph Embedded")
                 self.plot_silhouette(encodings, mbk_means_labels, self._n_clusters, silhouette_score_TSNE[id])
             else:
