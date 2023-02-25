@@ -59,9 +59,10 @@ class TestModel:
 
     def reconstruct(self):
         self._model.eval()
-        (valid_originals, _, label) = next(self._iterator)
-        valid_originals = torch.reshape(valid_originals, (valid_originals.shape[0] * valid_originals.shape[1],
-                                                          valid_originals.shape[2], valid_originals.shape[3]))
+        (valid_originals, _, label, _) = next(self._iterator)
+        valid_originals = torch.reshape(valid_originals, (valid_originals.shape[0] * valid_originals.shape[1]
+                                                          * valid_originals.shape[2], valid_originals.shape[3],
+                                                          valid_originals.shape[4]))
         valid_originals = torch.unsqueeze(valid_originals, 1)
         valid_originals = valid_originals.to(self.device)
 
@@ -148,14 +149,14 @@ class TrainModel:
             for i in xrange(config["num_training_updates"]):
                 self._model.train()
                 try:
-                    data, _, _ = next(iterator_train)
+                    data, _, _, _ = next(iterator_train)
                 except Exception as e:
                     print("error")
                     print(e)
                     logs.append(e)
                     continue
 
-                data = torch.reshape(data, (data.shape[0] * data.shape[1], data.shape[2], data.shape[3]))
+                data = torch.reshape(data, (data.shape[0] * data.shape[1] * data.shape[2], data.shape[3], data.shape[4]))
                 data = torch.unsqueeze(data, 1)
                 data = data.to(self.device)
 
@@ -178,7 +179,7 @@ class TrainModel:
                         originals, reconstructions, encodings, labels, test_error = test_.reconstruct()
                         fig = test_.plot_reconstructions(originals, reconstructions)
                         images = wandb.Image(fig, caption=f"recon_error: {np.round(test_error.item(), 4)}")
-                        self.wandb_logging({"examples": images, "step": i + 1 // 20})
+                        self.wandb_logging({"examples": images, "step": (i + 1) // 20})
 
                     except Exception as e:
                         print(f"error; {e}")
@@ -188,12 +189,12 @@ class TrainModel:
                     pass
 
                 if loss < 0.04:
-                    wandb.alert(
-                        title='High accuracy',
-                        text=f'Recon error {loss} is lower than 0.04',
-                        level=AlertLevel.WARN,
-                        wait_duration=timedelta(minutes=1)
-                    )
+                    # wandb.alert(
+                    #     title='High accuracy',
+                    #     text=f'Recon error {loss} is lower than 0.04',
+                    #     level=AlertLevel.WARN,
+                    #     wait_duration=timedelta(minutes=1)
+                    # )
                     time = datetime.datetime.now()
                     torch.save(self._model.state_dict(), f'{run_name}_day_{time.day}_hour_{time.hour}_low_error.pkl')
                 else:
