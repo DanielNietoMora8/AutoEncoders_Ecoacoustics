@@ -4,13 +4,8 @@ import torch
 import torchaudio
 import numpy as np
 from Modules.Utils import plot_spectrogram
-from torch.utils.data import DataLoader
-from Jaguas_DataLoader import SoundscapeData
 from pathlib import Path
-import sounddevice as sd
-import librosa
 import librosa.display
-import cv2
 
 cuda = torch.device('cuda:0')
 torch.cuda.empty_cache()
@@ -34,6 +29,23 @@ record = torchaudio.transforms.Resample(sr, 22050)(record)
 record = record[:, :1300950]
 record = record[:, :audio_len * (record.shape[1] // audio_len)]
 record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
+
+fig, ax = plt.subplots(figsize=(20, 6))
+ax.plot(record[0], color="k")
+ax.set(title='Time Domain - Waveform')
+ax.title.set_size(18)
+ax.set_xlabel('Time', fontsize=18)
+ax.set_ylabel('Amplutide', fontsize=18)
+ax.tick_params(axis='x', labelsize=16)
+ax.tick_params(axis='y', labelsize=16)
+ax.xaxis.label.set_size(18)
+ax.yaxis.label.set_size(18)
+plt.savefig("Waveform.pdf", format="pdf")
+plt.show()
+
+# plt.figure()
+# plt.plot(record[0])
+# plt.show()
 
 
 #%%
@@ -61,23 +73,86 @@ plt.figure()
 plt.title("librosa")
 librosa.display.specshow(S_db, sr=sr)
 plt.show()
-
+#%%
 plt.figure()
 plt.imshow(S_db)
-plt.show()#%%
+plt.show()
+#%%
 import matplotlib.pyplot as plt
 y, sr = librosa.load(librosa.ex('choice'), duration=25)
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(8, 6))
 D = librosa.amplitude_to_db(np.abs(librosa.stft(record_2[0], n_fft=512, hop_length=8)), ref=np.max)
 img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
                                sr=sr, ax=ax)
-ax.set(title='Linear-frequency power spectrogram')
+ax.set(title='Spectral Domain - Fourier Transform')
+ax.title.set_size(18)
+ax.set_xlabel('Hour', fontsize=14)
+ax.set_ylabel('Frequency (Hz)', fontsize=14)
+ax.tick_params(axis='x', labelsize=16)
+ax.tick_params(axis='y', labelsize=16)
+ax.xaxis.label.set_size(18)
+ax.yaxis.label.set_size(18)
 ax.label_outer()
 print(D.shape)
+plt.savefig("Fourier.pdf", format="pdf")
 plt.show()
 
 #%%
 
+chroma = librosa.feature.chroma_stft(S=D, sr=sr)
+fig, ax = plt.subplots(figsize=(8, 6))
+img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax)
+ax.set(title='Chromagram')
+ax.title.set_size(18)
+ax.xaxis.label.set_size(18)
+ax.yaxis.label.set_size(18)
+ax.tick_params(axis='x', labelsize=16)
+ax.tick_params(axis='y', labelsize=16)
+plt.savefig("Chroma.pdf", format="pdf")
+plt.show()
+
+#%%
+m_slaney = librosa.feature.mfcc(y=record_2[0], sr=sr, dct_type=2)
+fig, ax = plt.subplots(figsize=(8,6))
+img1 = librosa.display.specshow(m_slaney, x_axis='time', ax=ax)
+ax.set(title='Spectral Domain - MFCC')
+ax.title.set_size(18)
+ax.xaxis.label.set_size(18)
+ax.yaxis.label.set_size(18)
+ax.tick_params(axis='x', labelsize=16)
+ax.tick_params(axis='y', labelsize=16)
+plt.savefig("MFCC.pdf", format="pdf")
+plt.show()
+
+#%%
+hop_length = 512
+oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
+                                      hop_length=hop_length)
+# Compute global onset autocorrelation
+ac_global = librosa.autocorrelate(oenv, max_size=tempogram.shape[0])
+ac_global = librosa.util.normalize(ac_global)
+# Estimate the global tempo for display purposes
+tempo = librosa.beat.tempo(onset_envelope=oenv, sr=sr,
+                           hop_length=hop_length)[0]
+fig, ax = plt.subplots(figsize=(8, 6))
+librosa.display.specshow(tempogram, sr=sr, hop_length=hop_length,
+                         x_axis='time', y_axis='tempo', cmap='magma',
+                         ax=ax)
+ax.set(title='Time Domain - Tempogram')
+x = np.linspace(0, tempogram.shape[0] * float(hop_length) / sr,
+                num=tempogram.shape[0])
+
+ax.legend(loc='upper right')
+ax.title.set_size(18)
+ax.xaxis.label.set_size(18)
+ax.yaxis.label.set_size(18)
+ax.tick_params(axis='x', labelsize=16)
+ax.tick_params(axis='y', labelsize=16)
+plt.savefig("Tempogram.pdf", format="pdf")
+plt.show()
+
+#%%
 record, sr = librosa.load(files[104], duration=12)
 resampling = 22050
 record = librosa.resample(record, orig_sr=sr, target_sr=resampling)

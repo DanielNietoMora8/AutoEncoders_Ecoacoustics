@@ -28,14 +28,14 @@ class AE_Clustering:
         labels = le.transform(labels)
         return labels
 
-    def plot_clusters(self, X_embedded, original_labels, cluster_labels):
+    def plot_clusters(self, X, original_labels, cluster_labels):
         plt.close("all")
         #output.clear()
         fig = plt.figure(figsize=(15, 15))
         ax = fig.add_subplot(2, 1, 1)
-        ax.scatter(X_embedded[:, 0], X_embedded[:, 1], c=cluster_labels)
+        ax.scatter(X[:, 0], X[:, 1], c=cluster_labels)
         ax = fig.add_subplot(2, 1, 2)
-        ax.scatter(X_embedded[:, 0], X_embedded[:, 1], c=original_labels)
+        ax.scatter(X[:, 0], X[:, 1], c=original_labels)
         plt.show()
 
     def plot_silhouette(self, X, cluster_labels, n_clusters, silhouette_avg):
@@ -103,7 +103,7 @@ class AE_Clustering:
         ax1.set_xticks([-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0,
                         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
         print("Ya debio plotear")
-        plt.savefig(f"Clustering_Results/Figures/Clustering_plot_{n_clusters}.pdf", format="pdf")
+        plt.savefig(f"Clustering_Results/Batch_Kmeans/Figures/Silhouette_plot_TSNE_{n_clusters}.pdf", format="pdf")
         plt.show()
 
     def plot_centroids(self):
@@ -117,14 +117,16 @@ class AE_Clustering:
             plt.imshow(decodings[0, :, :], origin="lower", cmap="viridis", interpolation="nearest", vmin=0, vmax=1)
             plt.xticks(())
             plt.yticks(())
+        plt.savefig(f"Clustering_Results/Batch_Kmeans/Figures/Centroids_plot_TSNE_{self._n_clusters}.pdf", format="pdf")
+        plt.show()
 
-    def fordward(self, plot_clusters_period=30):
+    def fordward(self, plot_clusters_period=62):
         silhouette_score_TSNE = []
         silhouette_score_UMAP = []
 
         self.kmeans = MiniBatchKMeans(n_clusters=self._n_clusters, random_state=0)
         for id, item in enumerate(self._dataset):
-            if id+1 == 60:
+            if id+1 == 61:
                 break
             else:
                 pass
@@ -135,35 +137,37 @@ class AE_Clustering:
             except:
                 continue
             self._encodings_size = encodings[0].shape
-            labels = self.labeling(label, repetitions=4, axes=0)
-
+            # labels = self.labeling(label, axes=0)
+            labels = np.array(label)
             encodings = encodings.to("cpu").detach()
             encodings = encodings.reshape(encodings.shape[0],
                                         encodings.shape[1]*encodings.shape[2]*encodings.shape[3])
-            self.kmeans = self.kmeans.partial_fit(encodings)
+            X_embedded_TSNE = TSNE(n_components=2, learning_rate='auto',
+                                   init='random', random_state=0).fit_transform(encodings)
+            self.kmeans = self.kmeans.partial_fit(X_embedded_TSNE)
             # embedding = self.kmeans.transform(encodings)
             # mbk_means_cluster_centers = self.kmeans.cluster_centers_
             # mbk_means_labels = pairwise_distances_argmin(encodings, mbk_means_cluster_centers)
-            mbk_means_labels = self.kmeans.predict(encodings)
-            X_embedded_TSNE = TSNE(n_components=2, learning_rate='auto',
-                                   init='random', random_state=0).fit_transform(encodings)
+            mbk_means_labels = self.kmeans.predict(X_embedded_TSNE)
+
             # reducer = umap.UMAP()
             # X_embedded_UMAP = reducer.fit_transform(encodings)
 
-            silhouette_score_TSNE.append(metrics.silhouette_score(encodings, mbk_means_labels))
+            silhouette_score_TSNE.append(metrics.silhouette_score(X_embedded_TSNE, mbk_means_labels))
             print(silhouette_score_TSNE[id])
             if (id+1) % plot_clusters_period == 0:
                 self.plot_clusters(X_embedded_TSNE, mbk_means_labels, labels)
                 # self.plot_clusters(X_embedded_UMAP, mbk_means_labels, labels)
             else:
                 pass
-            if (id+1) % 59 == 0:
+            if (id+1) % 60 == 0:
                 print("plotting silhouette graph Embedded")
-                self.plot_silhouette(encodings, mbk_means_labels, self._n_clusters, silhouette_score_TSNE[id])
+                self.plot_silhouette(X_embedded_TSNE, mbk_means_labels, self._n_clusters, silhouette_score_TSNE[id])
+                # self.plot_centroids()
             else:
                 pass
 
-        with open(f"Clustering_Results/Results/silhouette_n-clusters: {self._n_clusters}_id: {id}", "wb") as file:
+        with open(f"Clustering_Results/Batch_Kmeans/Results/silhouette_n-clusters: {self._n_clusters}_id: {id}", "wb") as file:
             pkl.dump(silhouette_score_TSNE, file)
 
         return self.kmeans

@@ -121,17 +121,32 @@ def Spectrogram(files: list, module: str = "librosa", sr: int = 48000, n_fft: in
     else:
         print(f"Module {module} does not able to use ")
 
-def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', xmax=None):
-    fig, axs = plt.subplots(1, 1)
-    axs.set_title(title or 'Spectrogram (db)')
-    axs.set_ylabel(ylabel)
-    axs.set_xlabel('frame')
-    axs.set_axis_off()
-    axs.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect, cmap="inferno")
-    if xmax:
-        axs.set_xlim((0, xmax))
+def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', xmax=None, **kwargs):
+    print("Plotting Spectrogram")
+    if ("numx_plots" in kwargs and "numy_plots" in kwargs):
+        plt.figure(1, figsize=(12, 12))
+        plt.subplot(kwargs["numx_plots"], kwargs["numy_plots"], kwargs["i"]+1)
+        # print(axs.shape)
+        # plt.set_title(title or 'Spectrogram (db)')
+        # axs[kwargs["i"]].set_ylabel(ylabel)
+        # axs[kwargs["i"]].set_xlabel('frame')
+        # plt.set_axis_off()
+        plt.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect, cmap="inferno")
+        if xmax:
+            plt.set_xlim((0, xmax))
+        plt.xticks(())
+        plt.yticks(())
+    else:
+        plt.figure()
+        plt.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect, cmap="inferno")
+        if xmax:
+            plt.set_xlim((0, xmax))
+        plt.xticks(())
+        plt.yticks(())
+
+
     # fig.colorbar(im, ax=axs)
-    plt.show(block=False, bbox_inches='tight', transparent=True, pad_inches=0.0)
+    # plt.show(block=False)
     # fig.savefig("try2", bbox_inches='tight', transparent=True, pad_inches=0.0)
 
 

@@ -20,7 +20,7 @@ for i in range(len(folders)):
     path = Path(root_path+'/'+folders[i])
     files += list(Path(path).rglob("*.{}".format("wav")))
 
-for item in files[0:1]:
+for item in files[29:30]:
     s, fs = sound.load(item)
     Sxx, tn, fn, ext = sound.spectrogram(s, fs, nperseg=2048, noverlap=2)
 
@@ -59,9 +59,14 @@ for item in files[0:1]:
     # plt.show()
 
 #%%
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(8, 6))
     plt.imshow(plt_data, origin='lower', aspect='auto', interpolation='bilinear')
     # plt.set_axis_off()
-    plt.title('False-color spectrogram ' + str(item))
+    plt.title('Time-Frequency Domain - False-color spectrogram', fontsize=14)
     #plt.savefig("False-color  " + str(item) + ".jpg")
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.xlabel("Time", fontsize=18)
+    plt.ylabel("Frequency (Hz)", fontsize=18)
+    plt.savefig("Falsecolor.pdf", format="pdf")
     plt.show()
