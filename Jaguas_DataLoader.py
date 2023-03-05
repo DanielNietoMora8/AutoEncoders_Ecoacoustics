@@ -14,18 +14,23 @@ class SoundscapeData(Dataset):
     to return.
     """
 
-    def __init__(self, root_path: str, audio_length: int, ext: str = "wav", win_length: int = 255, original_length=60):
+    def __init__(self, root_path: str, audio_length: int, ext: str = "wav",
+                 win_length: int = 255, original_length: int = 60):
 
         """
         This function is used to initialize the Dataloader, here path and root of files are defined.
 
-        :param root_path: Main root of all files.
+        :param root_path: Files directory.
         :type root_path: str
-        :param path_labels: Path of the unique file containing audios information.
-        :type path_labels: str
-        :param path_names: Path of a file that contains audios root.
-        :type path_names: str
+        :param audio_length: Desired audio length partitions.
+        :type audio_length: int
+        :param ext: Audios format (e.g., .wav).
+        :type ext: str
         :param ext: Audios extension (ex: .wav)
+        :param win_length: Window length used to compute the fourier transform.
+        :type win_length: int
+        :param original_length: Duration in seconds of the original audios.
+        :type original_length:
         """
 
         if 'google.colab' in str(get_ipython()):
@@ -48,19 +53,19 @@ class SoundscapeData(Dataset):
     def __getitem__(self, index):
 
         """
-        Function used to return audios and spectrograms based on the batch size. Here it is searched and processed the
-        files to return each audio with it respective.
+        Function used to return audios and its respective spectrogram. Partitions of audios are made based on the
+        users' parameterization. An additional axes for partitions is returned.
 
         :param index: index indicates the number of data to return.
         :returns:
             :spec: Spectrogram of the indexed audios.
             :type spec: torch.tensor
-            :record: array representation of the indexed audios.
+            :record: Array of indexed audios in monophonic format.
             :type record: numpy.array
-            :sr: Sample rate.
-            :type sr: int
-            :features: Audio labels from the info file.
-            :type features: Dataframe.
+            :label: Dictionary of labels including recorder, hour, minute and second keys.
+            :type label: Dictionary
+            :path_index: File directory.
+            :type path index: String
 
         """
         if 'google.colab' in str(get_ipython()):
