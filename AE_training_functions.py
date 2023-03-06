@@ -13,8 +13,41 @@ from datetime import timedelta
 
 
 class TestModel:
+    """
+            Class to test convolutional autoencoder models.
+
+    """
+
+    """
+
+            :param index: index indicates the number of data to return.
+            :returns:
+                :spec: Spectrogram of the indexed audios.
+                :type spec: torch.tensor
+                :record: Array of indexed audios in monophonic format.
+                :type record: numpy.array
+                :label: Dictionary of labels including recorder, hour, minute and second keys.
+                :type label: Dictionary
+                :path_index: File directory.
+                :type path index: String
+
+    """
 
     def __init__(self, model, iterator, num_views=8, device="cuda"):
+
+        """
+            :param model: Deep learning model.
+            :type model:
+            :param iterator: dataloader iterator.
+            :type iterator:
+            :param num_views: Specify the number of samples to visualize previously and after the reconstruction.
+            :type num_views:
+            :param device: Specify the device to do calculus.
+            :type device:
+            Todo:
+                Check the args type.
+            """
+
         self._model = model
         self._iterator = iterator
         self.num_views = num_views
