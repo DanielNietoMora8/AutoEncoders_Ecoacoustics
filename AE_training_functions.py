@@ -7,6 +7,7 @@ from torchvision.utils import make_grid
 import torchaudio.transforms as audio_transform
 import torch.nn.functional as F
 import wandb
+from IPython.display import clear_output
 from wandb import AlertLevel
 import datetime
 from datetime import timedelta
@@ -237,7 +238,7 @@ class TrainModel:
             torch.cuda.empty_cache()
             time = datetime.datetime.now()
             torch.save(self._model.state_dict(), f'{run_name}_day_{time.day}_hour_{time.hour}_epoch_{epoch + 1}.pkl')
-            # output.clear()
+            clear_output()
             print(optimizer.state_dict()["param_groups"][0]["lr"])
 
         wandb.finish()

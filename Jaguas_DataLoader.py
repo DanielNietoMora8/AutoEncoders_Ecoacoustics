@@ -35,6 +35,8 @@ class SoundscapeData(Dataset):
 
         if 'google.colab' in str(get_ipython()):
             dir_root = "/content/drive/Shareddrives/"
+        elif "zmqshell" in str(get_ipython()):
+            dir_root = "/"
         else:
             dir_root = "G:/Unidades compartidas/"
 
@@ -68,7 +70,7 @@ class SoundscapeData(Dataset):
             :type path index: String
 
         """
-        if 'google.colab' in str(get_ipython()):
+        if 'google.colab' in str(get_ipython()) or "zmqshell" in str(get_ipython()):
             delimiter = "/"
         else:
             delimiter = "\\"
