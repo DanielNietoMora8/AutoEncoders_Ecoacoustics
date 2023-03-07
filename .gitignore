@@ -304,7 +304,6 @@ cython_debug/
 /Models/config_AE_batch_size_14_num_hiddens_64__day_4_hour_1.pth
 /Models/AE_batch_size_14_num_hiddens_64__day_4_hour_1_epoch_3.pkl
 /Models/AE_batch_size_14_num_hiddens_64__day_4_hour_1.pth
-/temporal/
 /Features/
 /Extra_and_Unused/AE_Convolutional_pruebas_Caribe.py
 /Extra_and_Unused/AE_Jaguas_Optuna.ipynb
