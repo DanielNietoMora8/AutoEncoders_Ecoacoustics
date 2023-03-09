@@ -237,7 +237,8 @@ class TrainModel:
             scheduler.step()
             torch.cuda.empty_cache()
             time = datetime.datetime.now()
-            torch.save(self._model.state_dict(), f'{run_name}_day_{time.day}_hour_{time.hour}_epoch_{epoch + 1}.pkl')
+            torch.save(self._model.state_dict(),
+                       f'temporal/models/model_{run_name}_day_{time.day}_hour_{time.hour}_epoch_{epoch+1}.pth')
             clear_output()
             print(optimizer.state_dict()["param_groups"][0]["lr"])
 

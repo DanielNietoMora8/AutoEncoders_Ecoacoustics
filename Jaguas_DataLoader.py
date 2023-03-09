@@ -81,7 +81,10 @@ class SoundscapeData(Dataset):
         hour = int(str(path_index).split(delimiter)[-1].split("_")[2].split(".")[0][0:2])
         minute = int(str(path_index).split(delimiter)[-1].split("_")[2].split(".")[0][2:4])
         second = int(str(path_index).split(delimiter)[-1].split("_")[2].split(".")[0][4:6])
-        label = {"recorder": recorder, "hour": hour, "minute": minute, "second": second}
+        label = {"recorder": np.repeat(recorder, self.original_length//self.audio_length),
+                 "hour": np.repeat(hour, self.original_length//self.audio_length),
+                 "minute": np.repeat(minute, self.original_length//self.audio_length),
+                 "second": np.repeat(second, self.original_length//self.audio_length)}
 
         record, sr = torchaudio.load(path_index)
         resampling = 22050
