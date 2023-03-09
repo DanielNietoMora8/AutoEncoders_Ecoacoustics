@@ -93,7 +93,7 @@ class TestModel:
 
     def reconstruct(self):
         self._model.eval()
-        (valid_originals, _, label, _) = next(self._iterator)
+        (valid_originals, _, label, path) = next(self._iterator)
         valid_originals = torch.reshape(valid_originals, (valid_originals.shape[0] * valid_originals.shape[1]
                                                           * valid_originals.shape[2], valid_originals.shape[3],
                                                           valid_originals.shape[4]))
@@ -110,7 +110,7 @@ class TestModel:
         BCE = F.mse_loss(valid_reconstructions, valid_originals)
         loss = BCE
 
-        return valid_originals, valid_reconstructions, valid_encodings, label, loss
+        return valid_originals, valid_reconstructions, valid_encodings, label, loss, path
 
     def run(self, plot=True, wave_return=True, wave_plot=True, directory=None):
         wave_original = []
@@ -210,7 +210,7 @@ class TrainModel:
                     try:
                         test_ = TestModel(self._model, iterator, 8, device=torch.device("cuda"))
                         # torch.save(model.state_dict(),f'model_{epoch}_{i}.pkl')
-                        originals, reconstructions, encodings, labels, test_error = test_.reconstruct()
+                        originals, reconstructions, encodings, labels, test_error, path = test_.reconstruct()
                         fig = test_.plot_reconstructions(originals, reconstructions)
                         images = wandb.Image(fig, caption=f"recon_error: {np.round(test_error.item(), 4)}")
                         self.wandb_logging({"examples": images, "step": (i + 1) // 20})

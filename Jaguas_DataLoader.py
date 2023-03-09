@@ -112,7 +112,8 @@ class SoundscapeData(Dataset):
         # # print(record.shape)
         # spec = db(spec)
         # spec = torch.squeeze(spec, dim=1)
-        return spec, record, label, str(path_index)
+        path_index = str(path_index)
+        return spec, record, label, path_index
 
     def __len__(self):
 
