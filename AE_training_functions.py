@@ -206,7 +206,7 @@ class TrainModel:
                 dict = {"loss": loss.item()}
                 self.wandb_logging(dict)
 
-                if (i + 1) % 20 == 0:
+                if (i + 1) % 200 == 0:
                     try:
                         test_ = TestModel(self._model, iterator, 8, device=torch.device("cuda"))
                         # torch.save(model.state_dict(),f'model_{epoch}_{i}.pkl')
