@@ -53,7 +53,7 @@ class ConvAE(nn.Module):
         encoded = self.encoder(x)
         print("encoder_shape: ", encoded.shape)
         decoded = self.decoder(encoded)
-        print("decoder_shape: ",decoded.shape)
+        print("decoder_shape: ", decoded.shape)
         return decoded
 
 
