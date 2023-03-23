@@ -206,31 +206,19 @@ class TrainModel:
                 dict = {"loss": loss.item()}
                 self.wandb_logging(dict)
 
-                if (i + 1) % 200 == 0:
+                period = 200
+                if (i + 1) % period == 0:
                     try:
                         test_ = TestModel(self._model, iterator, 8, device=torch.device("cuda"))
-                        # torch.save(model.state_dict(),f'model_{epoch}_{i}.pkl')
                         originals, reconstructions, encodings, labels, test_error, path = test_.reconstruct()
                         fig = test_.plot_reconstructions(originals, reconstructions)
                         images = wandb.Image(fig, caption=f"recon_error: {np.round(test_error.item(), 4)}")
-                        self.wandb_logging({"examples": images, "step": (i + 1) // 20})
+                        self.wandb_logging({"examples": images, "step": (i + 1) // period})
 
                     except Exception as e:
                         print(f"error; {e}")
                         logs.append(e)
                         continue
-                else:
-                    pass
-
-                if loss < 0.04:
-                    # wandb.alert(
-                    #     title='High accuracy',
-                    #     text=f'Recon error {loss} is lower than 0.04',
-                    #     level=AlertLevel.WARN,
-                    #     wait_duration=timedelta(minutes=1)
-                    # )
-                    time = datetime.datetime.now()
-                    torch.save(self._model.state_dict(), f'{run_name}_day_{time.day}_hour_{time.hour}_low_error.pkl')
                 else:
                     pass
 

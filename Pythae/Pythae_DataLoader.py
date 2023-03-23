@@ -59,20 +59,22 @@ class SoundscapeData(Dataset):
             :type features: Dataframe.
 
         """
-        path_index = self.files[index]
-        label = str(path_index).split("/")[-2]
-        # le = preprocessing.LabelEncoder()
-        labels = np.array(label)
+
         # le.fit(labels)
         # labels = le.transform(labels)
 
         record = None
         while record == None:
             try:
+                path_index = self.files[index]
+                label = str(path_index).split("/")[-2]
+                # le = preprocessing.LabelEncoder()
+                labels = np.array(label)
                 record, sr = torchaudio.load(path_index)
             except:
                 print(f"corruptued:{path_index}")
                 index += 1
+                continue
 
         resampling = 22050
         audio_len = self.audio_length * resampling
