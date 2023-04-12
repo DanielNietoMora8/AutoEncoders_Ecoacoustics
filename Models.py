@@ -178,92 +178,6 @@ class Reshape(nn.Module):
         return x.view(self.shape)
 
 
-class VAE2(nn.Module):
-    def __init__(self, imgChannels=1, num_hiddens: int = 64, zDim: int=128):
-        super(VAE2, self).__init__()
-
-        # Initializing the 2 convolutional layers and 2 full-connected layers for the encoder
-        self.num_hiddens = num_hiddens
-        self.encConv1 = nn.Conv2d(imgChannels, num_hiddens // 4, 8, 3)
-        self.encConv2 = nn.Conv2d(num_hiddens // 4, num_hiddens, 4, 2)
-        # self.encConv3 = nn.Conv2d(num_hiddens // 2, num_hiddens // 2, 3, 2)
-        # self.encConv4 = nn.Conv2d(num_hiddens // 2, num_hiddens, 3, 2)
-        # self.encConv5 = nn.Conv2d(num_hiddens, num_hiddens, 3, 2)
-        # self.encConv6 = nn.Conv2d(num_hiddens // 2, num_hiddens, 3, 2)
-
-        self.featureDim = num_hiddens*84*84
-        self.encFC1 = nn.Linear(self.featureDim, zDim)
-        self.encFC2 = nn.Linear(self.featureDim, zDim)
-
-        # Initializing the fully-connected layer and 2 convolutional layers for decoder
-        self.decFC1 = nn.Linear(zDim, self.featureDim)
-        self.decConv1 = nn.ConvTranspose2d(num_hiddens, num_hiddens // 4, 4, 2, output_padding=0)
-        self.decConv2 = nn.ConvTranspose2d(num_hiddens // 4, imgChannels, 8, 3, output_padding=0)
-        # self.decConv3 = nn.ConvTranspose2d(num_hiddens // 2, num_hiddens // 2, 3, 2, output_padding=0)
-        # self.decConv4 = nn.ConvTranspose2d(num_hiddens // 2, num_hiddens // 4, 4, 2, output_padding=0)
-        # self.decConv5 = nn.ConvTranspose2d(num_hiddens // 4, imgChannels, 4, 2, output_padding=1)
-        # self.decConv5 = nn.ConvTranspose2d(num_hiddens // 4, num_hiddens // 4, 3, 2)
-        # self.decConv5 = nn.ConvTranspose2d(num_hiddens // 4, imgChannels, 3, 2)
-
-        self.Sigmoid = nn.Sigmoid()
-
-    def encoder(self, x):
-
-        # Input is fed into 2 convolutional layers sequentially
-        # The output feature map are fed into 2 fully-connected layers to predict mean (mu) and variance (logVar)
-        # Mu and logVar are used for generating middle representation z and KL divergence loss
-        # print(x.shape)
-        x = F.relu(self.encConv1(x))
-        # print(f'conv1{x.shape}')
-        x = F.relu(self.encConv2(x))
-        # print(f'conv2{x.shape}')
-        # x = F.relu(self.encConv3(x))
-        # x = F.relu(self.encConv4(x))
-        # x = F.relu(self.encConv5(x))
-        # print(f'conv3{x.shape}')
-        x = x.view(-1, self.featureDim)
-        # print(f'encx.view{x.shape}')
-        mu = self.encFC1(x)
-        logVar = self.encFC2(x)
-        # print(f'mu: {mu.shape}')
-        return mu, logVar
-
-    def reparameterize(self, mu, logVar):
-
-        #Reparameterization takes in the input mu and logVar and sample the mu + std * eps
-        std = torch.exp(logVar/2)
-        eps = torch.randn_like(std)
-        return mu + std * eps
-
-    def decoder(self, z):
-
-        # z is fed back into a fully-connected layers and then into two transpose convolutional layers
-        # The generated output is the same size of the original input
-        # print(f'z:{z.shape}')
-        x = F.relu(self.decFC1(z))
-        # print(f'decFC1: {x.shape}')
-        x = x.view(-1, self.num_hiddens, 84, 84)
-        # print(f'x.view: {x.shape}')
-        x = F.relu(self.decConv1(x))
-        # print(f'x.decConv1: {x.shape}')
-        # x = F.relu(self.decConv2(x))
-        # x = F.relu(self.decConv3(x))
-        # x = F.relu(self.decConv4(x))
-        # print(f'x.decConv2: {x.shape}')
-        x = self.Sigmoid(self.decConv2(x))
-        # print(f'output: {x.shape}')
-        return x
-
-    def forward(self, x):
-
-        # The entire pipeline of the VAE: encoder -> reparameterization -> decoder
-        # output, mu, and logVar are returned for loss computation
-        mu, logVar = self.encoder(x)
-        z = self.reparameterize(mu, logVar)
-        out = self.decoder(z)
-        return out, mu, logVar
-
-
 class Encoder(nn.Module):
     def __init__(self, in_channels, num_hiddens):
         super(Encoder, self).__init__()
@@ -589,6 +503,102 @@ class ClusterlingLayer(nn.Module):
 
     def set_weight(self, tensor):
         self.weight = nn.Parameter(tensor)
+
+
+class PositionalEncoding2d(nn.Module):
+
+    def __init__(self, d_model: int = 64, height: int = 9, width: int = 9, dropout: float = 0.1, max_len: int = 5000):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        pe = torch.zeros(d_model, height, width)
+        # Each dimension use half of d_model
+        d_model = int(d_model / 2)
+        div_term = torch.exp(torch.arange(0., d_model, 2) *
+                             -(math.log(10000.0) / d_model))
+        pos_w = torch.arange(0., width).unsqueeze(1)
+        pos_h = torch.arange(0., height).unsqueeze(1)
+        pe[0:d_model:2, :, :] = torch.sin(pos_w * div_term).transpose(0, 1).unsqueeze(1).repeat(1, height, 1)
+        pe[1:d_model:2, :, :] = torch.cos(pos_w * div_term).transpose(0, 1).unsqueeze(1).repeat(1, height, 1)
+        pe[d_model::2, :, :] = torch.sin(pos_h * div_term).transpose(0, 1).unsqueeze(2).repeat(1, 1, width)
+        pe[d_model + 1::2, :, :] = torch.cos(pos_h * div_term).transpose(0, 1).unsqueeze(2).repeat(1, 1, width)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x, index: int, dropout: bool = False):
+        """
+        Args:
+            x: Tensor, shape [seq_len, batch_size, embedding_dim]
+        """
+        x = x.to("cuda")
+        self.pe = self.pe.to("cuda")
+        #         print(x.shape, self.pe.shape)
+        x = x + self.pe[index]
+        if dropout:
+            x = self.dropout(x)
+        else:
+            x = x
+        return x
+
+
+class posautoencoding_m1(nn.Module):
+    """
+    Convolutional autoencoder made to reconstruct the audios spectrograms generated by the EcoDataTesis dataloader.
+    """
+
+    def __init__(self, num_hiddens: int = 64):
+        """
+        Constructor of the convolutional autoencoder model.
+        """
+        super().__init__()
+        # TODO: To design the final architechture considering the spectrograms sizes.
+        # TODO: To correct the current sizes of the decoder.
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, num_hiddens // 8, kernel_size=8, stride=3, padding=0),  # N, 256, 127, 8004
+            nn.ReLU(),
+            nn.Conv2d(num_hiddens // 8, num_hiddens // 4, kernel_size=8, stride=3, padding=0),  # N, 512, 125,969
+            nn.ReLU(),
+            nn.Conv2d(num_hiddens // 4, num_hiddens // 2, kernel_size=4, stride=3, padding=0),  # N, 512, 125,969
+            nn.ReLU(),
+            nn.Conv2d(num_hiddens // 2, num_hiddens, kernel_size=2, stride=2, padding=0),  # N, 512, 125,969
+            nn.ReLU()
+        )
+        self.decoder = nn.Sequential(  # This is like go in opposite direction respect the encoder
+            nn.ConvTranspose2d(num_hiddens, num_hiddens // 2, kernel_size=2, stride=2, padding=0, output_padding=0),
+            # N, 32, 126,8000
+            nn.ReLU(),
+            nn.ConvTranspose2d(num_hiddens // 2, num_hiddens // 4, kernel_size=4, stride=3, padding=0,
+                               output_padding=0),  # N, 32, 127,64248
+            nn.ReLU(),
+            nn.ConvTranspose2d(num_hiddens // 4, num_hiddens // 8, kernel_size=8, stride=3, padding=0,
+                               output_padding=0),  # N, 32, 127,64248
+            nn.ReLU(),
+            nn.ConvTranspose2d(num_hiddens // 8, 1, kernel_size=8, stride=3, padding=0, output_padding=0),
+            # N, 32, 127,64248
+            nn.Sigmoid()
+
+        )
+
+    def forward(self, x, y, max_len=24):
+        """
+        Method to compute an image output based on the performed model.
+
+        :param x: Input spectrogram images as tensors.
+        :type x: torch.tensor
+        :return: Reconstructed images
+        """
+
+        # print(f"x_shape:{x.shape}")
+        encoded = self.encoder(x)
+        #         print("encoded: ", encoded.shape)
+        pos_encoder = PositionalEncoding2d(64, dropout=0.1, max_len=24).to("cuda")
+        posencoding_2d = pos_encoder(encoded.permute(1, 0, 2, 3), y)
+        #         print(posencoding_2d)
+        posencoding_2d = posencoding_2d.permute(1, 0, 2, 3)
+        #         print("encoder_shape: ", encoded.shape)
+        decoded = self.decoder(posencoding_2d)
+        #         print("decoder_shape: ",decoded.shape)
+        return decoded
 
 
 class ModelName(str, Enum):
