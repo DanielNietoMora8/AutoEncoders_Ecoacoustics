@@ -16,7 +16,7 @@ for i in range(len(folders)):
 
 print(len(files))
 
-delimiter=
+
 path_index = files[2343]
 recorder = str(path_index).split(delimiter)[-2]
 recorder = int(recorder[1:3])
