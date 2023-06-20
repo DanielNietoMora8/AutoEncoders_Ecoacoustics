@@ -6,7 +6,23 @@ import numpy as np
 from Modules.Utils import plot_spectrogram
 from pathlib import Path
 import librosa.display
+from torch.utils.data import DataLoader
 
+#%%
+from Jaguas_DataLoader_rainless import SoundscapeData
+dataset = SoundscapeData(root_path="ConservacionBiologicaIA/Datos/Jaguas_2018",
+                         dataframe_path="Jaguas\Complementary_Files\Audios_Jaguas\Audios_Jaguas.csv",
+                         audio_length=12, ext="wav", win_length=1028)
+loader = DataLoader(dataset, batch_size=1)
+
+#%%
+import pandas as pd
+df_folders = pd.read_csv("Jaguas\Complementary_Files\Audios_Jaguas\G03.csv")
+files = df_folders[df_folders["Intensity_Category"] == "No_rain"]
+len(files)ls
+
+
+#%%
 cuda = torch.device('cuda:0')
 torch.cuda.empty_cache()
 device = torch.device(cuda if torch.cuda.is_available() else "cpu")
@@ -25,8 +41,11 @@ print(files[0])
 record, sr = torchaudio.load(files[29])
 audio_len = 12 * 22050
 record = torch.mean(record, dim=0, keepdim=True)
-record = torchaudio.transforms.Resample(sr, 22050)(record)
-record = record[:, :1300950]
+resampling = 22050
+record = torchaudio.transforms.Resample(sr, resampling)(record)
+missing_padding = resampling * 60 - record.shape[1]
+padding = torch.zeros([1, missing_padding])
+record = torch.cat((record, padding), axis=1)
 record = record[:, :audio_len * (record.shape[1] // audio_len)]
 record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
 
@@ -40,12 +59,14 @@ ax.tick_params(axis='x', labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 ax.xaxis.label.set_size(18)
 ax.yaxis.label.set_size(18)
-plt.savefig("Waveform.pdf", format="pdf")
+# plt.savefig("Waveform.pdf", format="pdf")
 plt.show()
 
 # plt.figure()
 # plt.plot(record[0])
 # plt.show()
+
+
 
 
 #%%
