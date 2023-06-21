@@ -121,6 +121,12 @@ def Spectrogram(files: list, module: str = "librosa", sr: int = 48000, n_fft: in
     else:
         print(f"Module {module} does not able to use ")
 
+
+def get_row_col(pos, cols):
+    row = pos // cols
+    col = pos % cols
+    return row, col
+
 def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', xmax=None, **kwargs):
     print("Plotting Spectrogram")
     if ("numx_plots" in kwargs and "numy_plots" in kwargs):
@@ -131,14 +137,14 @@ def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', 
         # axs[kwargs["i"]].set_ylabel(ylabel)
         # axs[kwargs["i"]].set_xlabel('frame')
         # plt.set_axis_off()
-        plt.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect, cmap="inferno")
+        plt.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect, cmap="viridis")
         if xmax:
             plt.set_xlim((0, xmax))
         plt.xticks(())
         plt.yticks(())
     else:
         plt.figure()
-        plt.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect, cmap="inferno")
+        plt.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect, cmap="viridis")
         if xmax:
             plt.set_xlim((0, xmax))
         plt.xticks(())

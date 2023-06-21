@@ -17,7 +17,7 @@ class SoundscapeData(Dataset):
     """
 
     def __init__(self, root_path: str, dataframe_path: str, audio_length: int, ext: str = "wav",
-                 win_length: int = 255, original_length: int = 60):
+                 win_length: int = 255, original_length: int = 60, **kwargs):
 
         """
         This function is used to initialize the Dataloader, here path and root of files are defined.
@@ -48,6 +48,7 @@ class SoundscapeData(Dataset):
         print(self.root_path)
         self.win_length = win_length
         self.files = []
+        self.kwargs = kwargs
 
         df_folders = pd.read_csv(dataframe_path)
         self.files = df_folders[df_folders["Intensity_Category"] == "No_rain"]
@@ -81,19 +82,21 @@ class SoundscapeData(Dataset):
         else:
             delimiter = "\\"
 
+        delimiter = "_"
         path_index = self.files[index]
-        recorder = str(path_index).split(delimiter)[-2]
-        recorder = int(recorder[1:3])
-        hour = int(str(path_index).split(delimiter)[-1].split("_")[2].split(".")[0][0:2])
-        minute = int(str(path_index).split(delimiter)[-1].split("_")[2].split(".")[0][2:4])
-        second = int(str(path_index).split(delimiter)[-1].split("_")[2].split(".")[0][4:6])
+        recorder_str = str(path_index).split(delimiter)[0]
+        recorder = int(recorder_str[1:3])
+        hour = int(str(path_index).split(delimiter)[2][0:2])
+        minute = int(str(path_index).split(delimiter)[2][2:4])
+        second = int(str(path_index).split(delimiter)[2][4:6])
         label = {"recorder": np.repeat(recorder, self.original_length//self.audio_length),
                  "hour": np.repeat(hour, self.original_length//self.audio_length),
                  "minute": np.repeat(minute, self.original_length//self.audio_length),
                  "second": np.repeat(second, self.original_length//self.audio_length)}
 
-        record, sr = torchaudio.load(path_index)
-        resampling = 22050
+        audio_path = self.root_path + "/" + recorder_str + "_m" + "/" + path_index
+        record, sr = torchaudio.load(audio_path)
+        resampling = 44100//2
         audio_len = self.audio_length * resampling
         record = torch.mean(record, dim=0, keepdim=True)
         record = torchaudio.transforms.Resample(sr, resampling)(record)
@@ -104,10 +107,20 @@ class SoundscapeData(Dataset):
         record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
         win_length = self.win_length
         nfft = int(np.round(1*win_length))
-        spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
-                                                 window_fn=torch.hamming_window,
-                                                 power=2,
-                                                 normalized=False)(record)
+
+        if ("spectrogram_type" in self.kwargs and self.kwargs["spectrogram_type"] == "Mel"):
+            spec = torchaudio.transforms.MelSpectrogram(n_fft=nfft, win_length=win_length,
+                                                        window_fn=torch.hamming_window,
+                                                        power=2,
+                                                        normalized=False,
+                                                        sample_rate=resampling)(record)
+
+        else:
+            spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
+                                                     window_fn=torch.hamming_window,
+                                                     power=2,
+                                                     normalized=False)(record)
+
 
         # spec = spec[0]
         spec = torch.log1p(spec)

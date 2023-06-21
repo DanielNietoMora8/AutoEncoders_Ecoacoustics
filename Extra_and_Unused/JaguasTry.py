@@ -7,19 +7,23 @@ from Modules.Utils import plot_spectrogram
 from pathlib import Path
 import librosa.display
 from torch.utils.data import DataLoader
-
 #%%
 from Jaguas_DataLoader_rainless import SoundscapeData
 dataset = SoundscapeData(root_path="ConservacionBiologicaIA/Datos/Jaguas_2018",
-                         dataframe_path="Jaguas\Complementary_Files\Audios_Jaguas\Audios_Jaguas.csv",
-                         audio_length=12, ext="wav", win_length=1028)
+                         dataframe_path="Jaguas\Complementary_Files\Audios_Jaguas\G04.csv",
+                         audio_length=12, ext="wav", win_length=1028, spectrogram_type="SMel")
 loader = DataLoader(dataset, batch_size=1)
-
+iterator = iter(loader)
+a = next(iterator)
+print(a[0].shape)
+for i in range(a[0].shape[-3]):
+    plot_spectrogram(a[0][0, 0, i], "torchaudio", numx_plots=4, numy_plots=4, i=i)
+plt.show()
 #%%
 import pandas as pd
-df_folders = pd.read_csv("Jaguas\Complementary_Files\Audios_Jaguas\G03.csv")
+df_folders = pd.read_csv("Jaguas\Complementary_Files\Audios_Jaguas\G04.csv")
 files = df_folders[df_folders["Intensity_Category"] == "No_rain"]
-len(files)ls
+len(files)
 
 
 #%%
