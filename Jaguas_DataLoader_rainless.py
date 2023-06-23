@@ -97,7 +97,7 @@ class SoundscapeData(Dataset):
 
         audio_path = self.root_path + "/" + recorder_str + "_m" + "/" + path_index
         record, sr = torchaudio.load(audio_path)
-        resampling = 44100//2
+        resampling = 44100 // 2
         audio_len = self.audio_length * resampling
         record = torch.mean(record, dim=0, keepdim=True)
         record = torchaudio.transforms.Resample(sr, resampling)(record)
@@ -107,7 +107,7 @@ class SoundscapeData(Dataset):
         record = record[:, :audio_len * (record.shape[1] // audio_len)]
         record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
         win_length = self.win_length
-        nfft = int(np.round(2*win_length))
+        nfft = int(np.round(1*win_length))
 
         if ("spectrogram_type" in self.kwargs and self.kwargs["spectrogram_type"] == "Mel"):
             spec = torchaudio.transforms.MelSpectrogram(n_fft=nfft, win_length=win_length,
