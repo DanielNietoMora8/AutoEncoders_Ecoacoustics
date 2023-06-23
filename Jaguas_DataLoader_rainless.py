@@ -4,6 +4,7 @@ from IPython import get_ipython
 import os
 import numpy as np
 from pathlib import Path
+import torchaudio.transforms as F
 from torch.utils.data import Dataset
 import pandas as pd
 
@@ -106,28 +107,28 @@ class SoundscapeData(Dataset):
         record = record[:, :audio_len * (record.shape[1] // audio_len)]
         record = torch.reshape(record, (record.shape[1] // audio_len, audio_len))
         win_length = self.win_length
-        nfft = int(np.round(1*win_length))
+        nfft = int(np.round(2*win_length))
 
         if ("spectrogram_type" in self.kwargs and self.kwargs["spectrogram_type"] == "Mel"):
             spec = torchaudio.transforms.MelSpectrogram(n_fft=nfft, win_length=win_length,
                                                         window_fn=torch.hamming_window,
                                                         power=2,
-                                                        normalized=False,
+                                                        normalized=True,
                                                         sample_rate=resampling)(record)
 
         else:
             spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                                      window_fn=torch.hamming_window,
                                                      power=2,
-                                                     normalized=False)(record)
+                                                     normalized=True)(record)
 
 
         # spec = spec[0]
-        spec = torch.log1p(spec)
+        # spec = torch.log1p(spec)
         spec = torch.unsqueeze(spec, 0)
         # print(f"spec2: {spec.shape}")
         # spec = torch.unsqueeze(spec, dim=1)
-        # db = F.AmplitudeToDB(top_db=80)
+        # db = F.AmplitudeToDB(top_db=60)
         # # print(record.shape)
         # spec = db(spec)
         # spec = torch.squeeze(spec, dim=1)

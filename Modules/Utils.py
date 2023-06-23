@@ -127,8 +127,14 @@ def get_row_col(pos, cols):
     col = pos % cols
     return row, col
 
+
+def num_rows_cols(num_elements):
+    num_rows = int(np.sqrt(num_elements))
+    num_cols = (num_elements + num_rows - 1) // num_rows
+    return (num_rows, num_cols)
+
+
 def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', xmax=None, **kwargs):
-    print("Plotting Spectrogram")
     if ("numx_plots" in kwargs and "numy_plots" in kwargs):
         plt.figure(1, figsize=(12, 12))
         plt.subplot(kwargs["numx_plots"], kwargs["numy_plots"], kwargs["i"]+1)

@@ -4,6 +4,7 @@ import torch
 import torchaudio
 import numpy as np
 from Modules.Utils import plot_spectrogram
+from Modules.Utils import num_rows_cols
 from pathlib import Path
 import librosa.display
 from torch.utils.data import DataLoader
@@ -11,13 +12,22 @@ from torch.utils.data import DataLoader
 from Jaguas_DataLoader_rainless import SoundscapeData
 dataset = SoundscapeData(root_path="ConservacionBiologicaIA/Datos/Jaguas_2018",
                          dataframe_path="Jaguas\Complementary_Files\Audios_Jaguas\G04.csv",
-                         audio_length=12, ext="wav", win_length=1028, spectrogram_type="SMel")
-loader = DataLoader(dataset, batch_size=1)
+                         audio_length=12, ext="wav", win_length=4182, spectrogram_type="Mel")
+loader = DataLoader(dataset, batch_size=20)
+if dataset.kwargs["spectrogram_type"] == "Mel":
+    mel = True
+else:
+    mel = False
+
 iterator = iter(loader)
 a = next(iterator)
+a = next(iterator)
+a = next(iterator)
 print(a[0].shape)
-for i in range(a[0].shape[-3]):
-    plot_spectrogram(a[0][0, 0, i], "torchaudio", numx_plots=4, numy_plots=4, i=i)
+x, y = num_rows_cols(a[0].shape[0])
+for i in range(a[0].shape[0]):
+    plot_spectrogram(a[0][i, 0, 0], "torchaudio", numx_plots=x, numy_plots=y, i=i)
+# plt.savefig(f"Spec_comparison_audio_sr_22050_{dataset.audio_length}_seconds_winlength_{dataset.win_length}_mel_{mel}.pdf")
 plt.show()
 #%%
 import pandas as pd
