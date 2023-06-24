@@ -52,8 +52,11 @@ class SoundscapeData(Dataset):
         self.kwargs = kwargs
 
         df_folders = pd.read_csv(dataframe_path)
-        self.files = df_folders[df_folders["Intensity_Category"] == "No_rain"]
-        self.files = list(self.files["Filename"])
+        if ("filters" in self.kwargs):
+            self.filters = kwargs["filters"]
+            for key in self.filters.keys():
+                df_folders = df_folders[df_folders[key] == self.filters[key]]
+        self.files = list(df_folders["Filename"])
 
         # for i in range(len(self.folders)):
         #     df_recorder = pd.read_csv(f"Jaguas\Complementary_Files\Audios_Jaguas\{self.folders[i]}.csv")
