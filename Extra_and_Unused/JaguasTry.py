@@ -22,10 +22,10 @@ files = df_folders[df_folders["Intensity_Category"] == "No_rain"]
 len(files)
 
 #%%
-filters = {"Intensity_Category": "No_rain"}
+filters = {"Intensity_Category": "No_rain", "Habitat": "Forest"}
 dataset = SoundscapeData(root_path="ConservacionBiologicaIA/Datos/Jaguas_2018",
-                             dataframe_path="Jaguas\Complementary_Files\Audios_Jaguas\G04.csv",
-                             audio_length=12, ext="wav", win_length=1028, spectrogram_type="sMel", filters=filters)
+                             dataframe_path="Jaguas\Complementary_Files\Audios_Jaguas\Audios_Jaguas.csv",
+                             audio_length=12, ext="wav", win_length=1028, spectrogram_type="Normal", filters=filters)
 loader = DataLoader(dataset, batch_size=1)
 print(len(loader))
 iterator = iter(loader)

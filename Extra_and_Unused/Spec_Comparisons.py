@@ -8,7 +8,7 @@ import torchaudio
 import numpy as np
 
 shape = [1, 2]
-win = 200
+win = 300
 while (shape[0] != shape[1]) & (shape[1]>shape[0]):
     if shape[1]/shape[0] > 4:
         win += 32
@@ -49,6 +49,6 @@ a = next(iterator)
 print(a[0].shape)
 x, y = num_rows_cols(a[0].shape[0])
 for i in range(a[0].shape[0]):
-    plot_spectrogram(a[0][i, 0, 0], "torchaudio", numx_plots=x, numy_plots=y, i=i)
+    plot_spectrogram(a[0][i, 0, 0], "torchaudio", numx_plots=x, numy_plots=y, i=i, xmax=1)
 # plt.savefig(f"Spec_comparison_audio_sr_22050_{dataset.audio_length}_seconds_winlength_{dataset.win_length}_mel_{mel}_size_{a[0][0,0,0].shape}.pdf")
 plt.show()
