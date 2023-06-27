@@ -116,14 +116,14 @@ class SoundscapeData(Dataset):
             spec = torchaudio.transforms.MelSpectrogram(n_fft=nfft, win_length=win_length,
                                                         window_fn=torch.hamming_window,
                                                         power=2,
-                                                        normalized=True,
+                                                        normalized=False,
                                                         sample_rate=resampling)(record)
 
         else:
             spec = torchaudio.transforms.Spectrogram(n_fft=nfft, win_length=win_length,
                                                      window_fn=torch.hamming_window,
                                                      power=2,
-                                                     normalized=True)(record)
+                                                     normalized=False)(record)
 
 
         # spec = spec[0]

@@ -1,3 +1,4 @@
+import librosa
 from scipy.io.wavfile import write
 from six.moves import xrange
 import torch
@@ -86,7 +87,7 @@ class TestModel:
         output = torch.cat((imgs_original[0:self.num_views], imgs_reconstruction[0:self.num_views]), 0)
         img_grid = make_grid(output, nrow=self.num_views, pad_value=20)
         fig, ax = plt.subplots(figsize=(20, 5))
-        ax.imshow(img_grid[1, :, :].cpu(), origin="lower")
+        ax.imshow(librosa.power_to_db(img_grid[1, :, :].cpu()), origin="lower")
         ax.axis("off")
         plt.show()
         return fig
@@ -206,7 +207,7 @@ class TrainModel:
                 dict = {"loss": loss.item()}
                 self.wandb_logging(dict)
 
-                period = 200
+                period = 20
                 if (i + 1) % period == 0:
                     try:
                         test_ = TestModel(self._model, iterator, 8, device=torch.device("cuda"))
