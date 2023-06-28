@@ -35,7 +35,7 @@ if shape[0] == shape[1]:
 from Jaguas_DataLoader_rainless import SoundscapeData
 dataset = SoundscapeData(root_path="ConservacionBiologicaIA/Datos/Jaguas_2018",
                          dataframe_path="Jaguas\Complementary_Files\Audios_Jaguas\G04.csv",
-                         audio_length=6, ext="wav", win_length=514, spectrogram_type="sMel")
+                         audio_length=12, ext="wav", win_length=1028, spectrogram_type="sMel")
 loader = DataLoader(dataset, batch_size=20)
 if dataset.kwargs["spectrogram_type"] == "Mel":
     mel = True
