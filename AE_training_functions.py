@@ -227,7 +227,7 @@ class TrainModel:
             torch.cuda.empty_cache()
             time = datetime.datetime.now()
             torch.save(self._model.state_dict(),
-                       f'temporal/models/model_{run_name}_day_{time.day}_hour_{time.hour}_epoch_{epoch+1}.pth')
+                       f'temporal/models/model_{run_name}_month_{time.month}_day_{time.day}_hour_{time.hour}_epoch_{epoch+1}_training.pth')
             clear_output()
             print(optimizer.state_dict()["param_groups"][0]["lr"])
 
