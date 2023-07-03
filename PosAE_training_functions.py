@@ -105,7 +105,7 @@ class posautoencoding_m1(nn.Module):
         decoded = self.decoder(posencoding_2d)
         #         print("decoder_shape: ",decoded.shape)
         return decoded
-    
+
 
 class TestModel:
     """
