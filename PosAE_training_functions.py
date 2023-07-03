@@ -16,7 +16,6 @@ class PositionalEncoding2d(nn.Module):
     def __init__(self, d_model: int = 64, height: int = 9, width: int = 9, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
-
         pe = torch.zeros(d_model, height, width)
         # Each dimension use half of d_model
         d_model = int(d_model / 2)
@@ -58,7 +57,7 @@ class posautoencoding_m1(nn.Module):
         super().__init__()
         # TODO: To design the final architechture considering the spectrograms sizes.
         # TODO: To correct the current sizes of the decoder.
-
+        print("Running PosEncoding_m1")
         self.encoder = nn.Sequential(
             nn.Conv2d(1, num_hiddens // 8, kernel_size=8, stride=3, padding=0),  # N, 256, 127, 8004
             nn.ReLU(),
@@ -90,17 +89,20 @@ class posautoencoding_m1(nn.Module):
         Method to compute an image output based on the performed model.
 
         :param x: Input spectrogram images as tensors.
+        :param y: Label
         :type x: torch.tensor
         :return: Reconstructed images
         """
 
-        # print(f"x_shape:{x.shape}")
+        print(f"ENTRA!")
         encoded = self.encoder(x)
         #         print("encoded: ", encoded.shape)
         pos_encoder = PositionalEncoding2d(64, dropout=0.1, max_len=24).to("cuda")
         posencoding_2d = pos_encoder(encoded.permute(1, 0, 2, 3), y)
+        print(posencoding_2d.shape)
         #         print(posencoding_2d)
         posencoding_2d = posencoding_2d.permute(1, 0, 2, 3)
+        print(posencoding_2d.shape)
         #         print("encoder_shape: ", encoded.shape)
         decoded = self.decoder(posencoding_2d)
         #         print("decoder_shape: ",decoded.shape)
@@ -191,9 +193,9 @@ class TestModel:
         valid_originals = valid_originals.to(self.device)
 
         valid_encodings = self._model.encoder(valid_originals)
-        pos_encoder = PositionalEncoding2d(64, dropout=0.1, max_len=4).to("cuda")
+        pos_encoder = PositionalEncoding2d(64, dropout=0.1, max_len=24).to("cuda")
         posencoding_2d = pos_encoder(valid_encodings.permute(1, 0, 2, 3),
-                                     label["recorder"].reshape(valid_originals.shape[0]))
+                                     label["hour"].reshape(valid_originals.shape[0]))
         valid_encodings = posencoding_2d.permute(1, 0, 2, 3)
 
         valid_reconstructions = self._model.decoder(valid_encodings)
