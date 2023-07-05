@@ -6,6 +6,7 @@ import numpy as np
 import torch.nn.functional as F
 import librosa
 import librosa.display
+from torchvision.utils import make_grid
 import wandb
 from IPython.display import clear_output
 import datetime
@@ -97,7 +98,7 @@ class posautoencoding_m1(nn.Module):
         print(f"ENTRA!")
         encoded = self.encoder(x)
         #         print("encoded: ", encoded.shape)
-        pos_encoder = PositionalEncoding2d(64, dropout=0.1, max_len=24).to("cuda")
+        pos_encoder = PositionalEncoding2d(64, dropout=0.1, max_len=4).to("cuda")
         posencoding_2d = pos_encoder(encoded.permute(1, 0, 2, 3), y)
         print(posencoding_2d.shape)
         #         print(posencoding_2d)
@@ -193,9 +194,9 @@ class TestModel:
         valid_originals = valid_originals.to(self.device)
 
         valid_encodings = self._model.encoder(valid_originals)
-        pos_encoder = PositionalEncoding2d(64, dropout=0.1, max_len=24).to("cuda")
+        pos_encoder = PositionalEncoding2d(64, dropout=0.1, max_len=4).to("cuda")
         posencoding_2d = pos_encoder(valid_encodings.permute(1, 0, 2, 3),
-                                     label["hour"].reshape(valid_originals.shape[0]))
+                                     label["recorder"].reshape(valid_originals.shape[0]))
         valid_encodings = posencoding_2d.permute(1, 0, 2, 3)
 
         valid_reconstructions = self._model.decoder(valid_encodings)
@@ -272,7 +273,7 @@ class TrainModel:
                 data = data.to("cuda")
 
                 optimizer.zero_grad()
-                data_recon = self._model(data, label["hour"].reshape(data.shape[0]))
+                data_recon = self._model(data, label["recorder"].reshape(data.shape[0]))
 
                 loss = F.mse_loss(data_recon, data)
                 loss.backward()
@@ -304,7 +305,7 @@ class TrainModel:
             torch.cuda.empty_cache()
             time = datetime.datetime.now()
             torch.save(self._model.state_dict(),
-                       f'{run_name}_month_{time.month}_day_{time.day}_hour_{time.hour}_epoch_{epoch + 1}.pkl')
+                       f'{run_name}_month_{time.month}_day_{time.day}_recorder_{time.hour}_epoch_{epoch + 1}.pkl')
             clear_output()
             print(optimizer.state_dict()["param_groups"][0]["lr"])
 
