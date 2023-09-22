@@ -164,14 +164,20 @@ class Clustering_Results:
                 index = list(index[0])
                 labels_cluster.append(y_aux[i][index])
             df = pd.DataFrame({'recorder': labels_cluster[0], "hour": labels_cluster[1]})
-            joypy.joyplot(df, by="hour", column="recorder", range_style='own',
-                          grid="y", hist=False, linewidth=1, legend=False, figsize=(size_x, size_y),
-                          title=f"Cluster {cluster} \nLabels distribution along recorders using recorders as rows",
-                          colormap=cm.autumn_r, fade=False)
-            joypy.joyplot(df, by="recorder", column="hour", range_style='own',
-                          grid="y", hist=False, linewidth=1, legend=False, figsize=(size_x, size_y),
-                          title=f"Cluster {cluster} \nLabels distribution along recorders using hours as rows",
-                          colormap=cm.autumn_r)
+            if (self._label == "hour"):
+                joypy.joyplot(df, by="hour", column="recorder", range_style='own',
+                              grid="y", hist=False, linewidth=1, legend=False, figsize=(size_x, size_y),
+                              title=f"Cluster {cluster} \nLabels distribution along recorders using recorders as rows",
+                              colormap=cm.autumn_r, fade=False)
+
+            elif (self._label == "recorder"):
+                joypy.joyplot(df, by="recorder", column="hour", range_style='own',
+                              grid="y", hist=False, linewidth=1, legend=False, figsize=(size_x, size_y),
+                              title=f"Cluster {cluster} \nLabels distribution along recorders using hours as rows",
+                              colormap=cm.autumn_r)
+
+            plt.xticks(fontsize=22)
+            plt.yticks(fontsize=22)
             labels_all_clusters.append(index)
             plt.show()
         #             print(len(labels_cluster))
@@ -181,7 +187,7 @@ class Clustering_Results:
 
         return labels_all_clusters
 
-    def histograms(self, hist_library="plt", method=None, root=None):
+    def histograms(self, hist_library="plt", method=None, root=None, save=True):
         bins = list(self._n_labels)
         print(bins)
         num_rows, num_cols = num_rows_cols(self._n_clusters)
@@ -213,7 +219,7 @@ class Clustering_Results:
             else:
                 raise Exception(f"Library {self._hist_library} unused")
 
-            if root != None:
+            if root != None & save==True:
                 plt.savefig(f"temporal/clustering_results/{method}/Histograms_plot_{self._n_clusters}.pdf", format="pdf")
             else:
                 pass
