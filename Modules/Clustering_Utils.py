@@ -148,7 +148,7 @@ class Clustering_Results:
                 index = np.where(self._model.labels_ == cluster)
                 index = list(index[0])
             labels.append(samples[index])
-        return labels
+        # return labels
 
     def joyplot(self):
         labels_all_clusters = []
