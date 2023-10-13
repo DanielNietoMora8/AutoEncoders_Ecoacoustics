@@ -169,7 +169,7 @@ class TrainModel:
             wandb.log({keys: dict[keys]})
 
     def fordward(self, training_loader, test_loader, config):
-        iterator = iter(test_loader)
+        # iterator = iter(test_loader)
         wandb_enable, run_name = self.wandb_init(config)
         optimizer = config["optimizer"]
         scheduler = config["scheduler"]
@@ -181,6 +181,7 @@ class TrainModel:
 
         for epoch in range(config["num_epochs"]):
             iterator_train = iter(training_loader)
+            iterator = iter(test_loader)
             for i in xrange(config["num_training_updates"]):
                 self._model.train()
                 try:
@@ -207,7 +208,7 @@ class TrainModel:
                 dict = {"loss": loss.item()}
                 self.wandb_logging(dict)
 
-                period = 20
+                period = 200
                 if (i + 1) % period == 0:
                     try:
                         test_ = TestModel(self._model, iterator, 8, device=torch.device("cuda"))
