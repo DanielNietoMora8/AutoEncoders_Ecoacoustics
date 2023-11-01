@@ -187,7 +187,7 @@ class Clustering_Results:
 
         return labels_all_clusters
 
-    def histograms(self, hist_library="plt", method=None, root=None, save=True):
+    def histograms(self, hist_library="plt", root=None, save=True):
         bins = list(self._n_labels)
         print(bins)
         num_rows, num_cols = num_rows_cols(self._n_clusters)
@@ -219,8 +219,8 @@ class Clustering_Results:
             else:
                 raise Exception(f"Library {self._hist_library} unused")
 
-            if root != None & save==True:
-                plt.savefig(f"temporal/clustering_results/{method}/Histograms_plot_{self._n_clusters}.pdf", format="pdf")
+            if (root is not None) & (save is True):
+                plt.savefig(f"{root}/Histograms_plot_{self._n_clusters}.pdf", format="pdf")
             else:
                 pass
         plt.show()

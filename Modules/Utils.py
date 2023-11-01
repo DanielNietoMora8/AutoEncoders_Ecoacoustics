@@ -135,13 +135,10 @@ def num_rows_cols(num_elements):
     return (num_rows, num_cols)
 
 
-def plot_spectrogram(spec, title=None, ylabel: str = 'freq_bin', aspect='auto', xmax=None, **kwargs):
+def plot_spectrogram(spec, nfft=1028, title=None, ylabel: str = 'freq_bin', aspect='auto', xmax=None, **kwargs):
     nfft = 1028
     sr = 22050
-    if "bins" in kwargs.keys():
-        nfft = kwargs["nfft"]
-    else:
-        pass
+
     if "sr" in kwargs.keys():
         sr = kwargs["sr"]
     else:

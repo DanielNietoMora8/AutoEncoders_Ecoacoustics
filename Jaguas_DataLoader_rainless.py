@@ -112,7 +112,7 @@ class SoundscapeData(Dataset):
         win_length = self.win_length
         nfft = int(np.round(1*win_length))
 
-        if ("spectrogram_type" in self.kwargs and self.kwargs["spectrogram_type"] == "Mel"):
+        if "spectrogram_type" in self.kwargs and self.kwargs["spectrogram_type"] == "Mel":
             spec = torchaudio.transforms.MelSpectrogram(n_fft=nfft, win_length=win_length,
                                                         window_fn=torch.hamming_window,
                                                         power=2,
