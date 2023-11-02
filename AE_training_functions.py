@@ -153,7 +153,7 @@ class TrainModel:
 
             wandb.login()
             wandb.finish()
-            wandb.init(project="AE-Jaguas", config=config)
+            wandb.init(project=config["project"], config=config)
             wandb.run.name = run_name
             wandb.run.save()
             wandb.watch(self._model, F.mse_loss, log="all", log_freq=1)
