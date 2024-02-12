@@ -125,10 +125,9 @@ class SoundscapeData(Dataset):
             path_index = str(path_index)
 
             recorder = [recorder]*(self.original_length // self.audio_length)
-            # print(recorder)
             hour = int(path_index.split("_")[1][0:2])
-            minute = int(path_index.split("_")[1][0:2])
-            second = int(path_index.split("_")[1][2:4])
+            minute = int(path_index.split("_")[1][2:4])
+            second = int(path_index.split("_")[1][4:6])
             year = int(path_index.split("_")[0][0:4])
             month = int(path_index.split("_")[0][4:6])
             day = int(path_index.split("_")[0][6:8])
