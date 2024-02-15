@@ -41,6 +41,21 @@ class ConvAE(nn.Module):
 
         )
 
+    def forward(self, x):
+        """
+        Method to compute an image output based on the performed model.
+
+        :param x: Input spectrogram images as tensors.
+        :type x: torch.tensor
+        :return: Reconstructed images
+        """
+        # print(f"x_shape:{x.shape}")
+        encoded = self.encoder(x)
+        print("encoder_shape: ", encoded.shape)
+        decoded = self.decoder(encoded)
+        print("decoder_shape: ", decoded.shape)
+        return decoded
+
 
 class ConvAE2(nn.Module):
     """
