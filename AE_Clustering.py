@@ -1,3 +1,4 @@
+import librosa
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.manifold import TSNE
 from sklearn.metrics.pairwise import pairwise_distances_argmin
@@ -107,6 +108,7 @@ class AE_Clustering:
         plt.show()
 
     def plot_centroids(self):
+        print("PLOTING CENTROIDS!!!!!")
         plt.figure(figsize=(18, 18))
         self._ae_testing._model.to("cpu")
         for i, spec in enumerate(self.kmeans.cluster_centers_):
@@ -114,7 +116,7 @@ class AE_Clustering:
             encodings = torch.tensor(encodings).float()
             decodings = self._ae_testing._model.decoder(encodings).detach().numpy()
             plt.subplot(9, 9, i + 1)
-            plt.imshow(decodings[0, :, :], origin="lower", cmap="viridis", interpolation="nearest", vmin=0, vmax=1)
+            plt.imshow(librosa.power_to_db(decodings[0, :, :]), origin="lower", cmap="viridis", aspect="auto")
             plt.xticks(())
             plt.yticks(())
         plt.savefig(f"Clustering_Results/Batch_Kmeans/Figures/Centroids_plot_TSNE_{self._n_clusters}.pdf", format="pdf")
