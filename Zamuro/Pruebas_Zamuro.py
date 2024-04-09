@@ -70,7 +70,7 @@ from torch.utils.data import random_split
 from torch.utils.data import DataLoader
 
 dataset = SoundscapeData('/media/mirp_ai/Seagate Desktop Drive/Datos Rey Zamuro/Ultrasonido/',
-                         dataframe_path="Complementary_Files/zamuro_audios.csv",
+                         dataframe_path="Complementary_Files/Audios_Zamuro/zamuro_audios.csv",
                          audio_length=12, ext="wav",
                          win_length=1028, filters=filters)
 dataset_train, dataset_test = random_split(dataset,
