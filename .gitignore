@@ -348,3 +348,8 @@ cython_debug/
 /Jaguas/temporal/configs/
 /Jaguas/temporal/datasets/
 /Zamuro/AI_Caract/
+/Jaguas/temporal/Features/
+/Jaguas/temporal/clustering_results/
+/Jaguas/vggish/Features_vggish/
+/Zamuro/temporal_zamuro/Features/
+/Zamuro/temporal_zamuro/zamuro_projections/
