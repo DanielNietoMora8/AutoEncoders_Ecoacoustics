@@ -114,7 +114,8 @@ class SoundscapeData(Dataset):
                                                      normalized=False)(record)
 
             # spec = spec[0]
-            spec = torch.log1p(spec)
+            # spec = torch.log1p(spec)
+            spec = self.standardize(spec)
             spec = torch.unsqueeze(spec, 0)
             # print(f"spec2: {spec.shape}")
             # spec = torch.unsqueeze(spec, dim=1)
@@ -150,3 +151,9 @@ class SoundscapeData(Dataset):
         :return: Number of processed files.
         """
         return len(self.files)
+
+    def standardize(self, spectrogram):
+        mean = spectrogram.mean()
+        std = spectrogram.std()
+        standardized_spectrogram = (spectrogram - mean) / std
+        return standardized_spectrogram

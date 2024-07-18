@@ -57,6 +57,73 @@ class ConvAE(nn.Module):
         return decoded
 
 
+class ConvAE128(nn.Module):
+    def __init__(self, num_hiddens: int = 128):
+        """
+        Constructor of the convolutional autoencoder model.
+        """
+        super().__init__()
+
+        # Encoder
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=8, stride=2, padding=3),  # 515x515 -> 258x258
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=8, stride=2, padding=3),  # 258x258 -> 129x129
+            nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=8, stride=2, padding=3),  # 129x129 -> 65x65
+            nn.ReLU(),
+            nn.Conv2d(128, 256, kernel_size=8, stride=2, padding=3),  # 65x65 -> 33x33
+            nn.ReLU(),
+            nn.Conv2d(256, 512, kernel_size=8, stride=2, padding=3),  # 33x33 -> 17x17
+            nn.ReLU(),
+            nn.Conv2d(512, 1024, kernel_size=7, stride=2, padding=3),  # 17x17 -> 9x9
+            nn.ReLU(),
+            nn.Conv2d(1024, num_hiddens, kernel_size=7, stride=2, padding=3),  # 9x9 -> 5x5
+            nn.ReLU(),
+            nn.Conv2d(num_hiddens, num_hiddens, kernel_size=4),  # 5x5 -> 1x1
+            nn.ReLU(),
+        )
+
+        # Decoder
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(num_hiddens, num_hiddens, kernel_size=4),  # 1x1 -> 5x5
+            nn.ReLU(),
+            nn.ConvTranspose2d(num_hiddens, 1024, kernel_size=7, stride=2, padding=3, output_padding=1),  # 5x5 -> 9x9
+            nn.ReLU(),
+            nn.ConvTranspose2d(1024, 512, kernel_size=8, stride=2, padding=3),  # 9x9 -> 17x17
+            nn.ReLU(),
+            nn.ConvTranspose2d(512, 256, kernel_size=8, stride=2, padding=3),  # 17x17 -> 33x33
+            nn.ReLU(),
+            nn.ConvTranspose2d(256, 128, kernel_size=8, stride=2, padding=3),  # 33x33 -> 65x65
+            nn.ReLU(),
+            nn.ConvTranspose2d(128, 64, kernel_size=8, stride=2, padding=3),  # 65x65 -> 129x129
+            nn.ReLU(),
+            nn.ConvTranspose2d(64, 32, kernel_size=8, stride=2, padding=3, output_padding=1),  # 129x129 -> 258x258
+            nn.ReLU(),
+            nn.ConvTranspose2d(32, 1, kernel_size=8, stride=2, padding=3, output_padding=1),  # 258x258 -> 515x515
+            nn.Sigmoid(),  # Sigmoid to bring the output to [0, 1]
+        )
+
+    def forward(self, x):
+        """
+        Method to compute an image output based on the performed model.
+
+        :param x: Input spectrogram images as tensors.
+        :type x: torch.tensor
+        :return: Reconstructed images
+        """
+        # Encoder
+        encoded = self.encoder(x)
+        print(f"encoded: {encoded.shape}")
+
+        # Decoder
+        decoded = self.decoder(encoded)
+        print(f"decoded: {decoded.shape}")
+
+        return decoded
+
+
+
 class ConvAEWithIntermediates(nn.Module):
     def __init__(self, num_hiddens: int = 64):
         super(ConvAEWithIntermediates, self).__init__()
