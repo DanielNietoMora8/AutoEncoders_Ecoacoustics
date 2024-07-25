@@ -7,6 +7,7 @@ import numpy as np
 from torchvision.utils import make_grid
 import torchaudio.transforms as audio_transform
 import torch.nn.functional as F
+from torch import nn
 import wandb
 from IPython.display import clear_output
 from wandb import AlertLevel
@@ -198,7 +199,7 @@ class TrainModel:
 
                 optimizer.zero_grad()
                 data_recon = self._model(data)
-
+                
                 loss = F.mse_loss(data_recon, data)
                 loss.backward()
 
@@ -208,7 +209,7 @@ class TrainModel:
                 dict = {"loss": loss.item()}
                 self.wandb_logging(dict)
 
-                period = 200
+                period = 50
                 if (i + 1) % period == 0:
                     try:
                         test_ = TestModel(self._model, iterator, 8, device=torch.device("cuda"))
@@ -234,3 +235,12 @@ class TrainModel:
 
         wandb.finish()
         return self._model, logs, run_name
+
+
+class RMSLELoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+
+    def forward(self, pred, actual):
+        return torch.sqrt(self.mse(torch.log(pred + 1), torch.log(actual + 1)))
