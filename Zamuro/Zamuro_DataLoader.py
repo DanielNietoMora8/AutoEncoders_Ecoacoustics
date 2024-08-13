@@ -114,8 +114,8 @@ class SoundscapeData(Dataset):
                                                      normalized=False)(record)
 
             # spec = spec[0]
-            # spec = torch.log1p(spec)
-            spec = self.standardize(spec)
+            spec = torch.log1p(spec)
+            # spec = self.standardize(spec)
             spec = torch.unsqueeze(spec, 0)
             # print(f"spec2: {spec.shape}")
             # spec = torch.unsqueeze(spec, dim=1)
