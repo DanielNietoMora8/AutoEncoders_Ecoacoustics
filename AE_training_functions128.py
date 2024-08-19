@@ -1,6 +1,6 @@
 import librosa
 from scipy.io.wavfile import write
-from six.moves import xrange
+# from six.moves import xrange
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
@@ -109,12 +109,9 @@ class TestModel:
         # valid_reconstructions = self._model.latent_fc(valid_encodings)
         # valid_reconstructions = valid_reconstructions.view(-1, 1024, 8, 8)
         valid_reconstructions = self._model.decoder(valid_encodings)
-        print(f"shape: {valid_reconstructions.shape}, encoding: {valid_reconstructions}")
 
         valid_originals_nonorm = torch.expm1(valid_originals)
         valid_reconstructions_nonorm = torch.expm1(valid_reconstructions)
-
-        plt.imshow(valid_reconstructions.to("cpu").detach().numpy()[0, 0])
 
         BCE = F.mse_loss(valid_reconstructions, valid_originals)
         loss = BCE
@@ -190,7 +187,7 @@ class TrainModel:
         for epoch in range(config["num_epochs"]):
             iterator_train = iter(training_loader)
             iterator = iter(test_loader)
-            for i in xrange(config["num_training_updates"]):
+            for i in range(config["num_training_updates"]):
                 self._model.train()
                 try:
                     data, _, _, _ = next(iterator_train)
@@ -206,7 +203,7 @@ class TrainModel:
 
                 optimizer.zero_grad()
                 data_recon = self._model(data)
-                print(f"training --- data_reconmin: {data.min()}, data_reconmax: {data.max()}")
+                # print(f"training --- data_reconmin: {data.min()}, data_reconmax: {data.max()}")
                 loss = F.mse_loss(data_recon, data)
                 loss.backward()
 
@@ -215,7 +212,7 @@ class TrainModel:
                 dict = {"loss": loss.item()}
                 self.wandb_logging(dict)
 
-                period = 10
+                period = 50
                 if (i + 1) % period == 0:
                     try:
                         test_ = TestModel(self._model, iterator, 8, device=torch.device("cuda"))
