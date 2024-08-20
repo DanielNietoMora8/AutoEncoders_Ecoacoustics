@@ -96,9 +96,12 @@ class TestModel:
     def reconstruct(self):
         self._model.eval()
         (valid_originals, _, label, path) = next(self._iterator)
-        valid_originals = torch.reshape(valid_originals, (valid_originals.shape[0] * valid_originals.shape[1]
-                                                          * valid_originals.shape[2], valid_originals.shape[3],
-                                                          valid_originals.shape[4]))
+        # valid_originals = torch.reshape(valid_originals, (valid_originals.shape[0] * valid_originals.shape[1]
+        #                                                   * valid_originals.shape[2], valid_originals.shape[3],
+        #                                                   valid_originals.shape[4]))
+        valid_originals = torch.reshape(valid_originals, (valid_originals.shape[0] * valid_originals.shape[1],
+                                                          valid_originals.shape[2],
+                                                          valid_originals.shape[3]))
         valid_originals = torch.unsqueeze(valid_originals, 1)
         valid_originals = valid_originals.to(self.device)
 
@@ -197,7 +200,8 @@ class TrainModel:
                     logs.append(e)
                     continue
 
-                data = torch.reshape(data, (data.shape[0] * data.shape[1] * data.shape[2], data.shape[3], data.shape[4]))
+                # data = torch.reshape(data, (data.shape[0] * data.shape[1] * data.shape[2], data.shape[3], data.shape[4]))
+                data = torch.reshape(data, (data.shape[0] * data.shape[1], data.shape[2], data.shape[3]))
                 data = torch.unsqueeze(data, 1)
                 data = data.to(self.device)
 
@@ -219,7 +223,7 @@ class TrainModel:
                         originals, reconstructions, encodings, labels, test_error, path = test_.reconstruct()
                         fig = test_.plot_reconstructions(originals, reconstructions)
                         images = wandb.Image(fig, caption=f"recon_error: {np.round(test_error.item(), 4)}")
-                        self.wandb_logging({"examples": images, "step": (i + 1) // period})
+                        self.wandb_logging({"examples": images, "step": (i + 1) // period, "test_error":test_error})
 
                     except Exception as e:
                         print(f"error; {e}")
