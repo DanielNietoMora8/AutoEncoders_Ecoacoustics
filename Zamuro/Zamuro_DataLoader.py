@@ -113,7 +113,7 @@ class SoundscapeData(Dataset):
                                                      power=2,
                                                      normalized=False)(record)
 
-            spec = spec[0]
+            # spec = spec[0]
             spec = torch.log1p(spec)
             # print(f"spec1: {spec.shape}")
 
