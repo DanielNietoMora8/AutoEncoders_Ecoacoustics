@@ -169,7 +169,7 @@ class TrainModel:
         for keys in dict:
             wandb.log({keys: dict[keys]})
 
-    def fordward(self, training_loader, test_loader, config):
+    def forward(self, training_loader, test_loader, config):
         # iterator = iter(test_loader)
         wandb_enable, run_name = self.wandb_init(config)
         optimizer = config["optimizer"]
@@ -183,7 +183,7 @@ class TrainModel:
         for epoch in range(config["num_epochs"]):
             iterator_train = iter(training_loader)
             iterator = iter(test_loader)
-            for i in xrange(config["num_training_updates"]):
+            for i in range(config["num_training_updates"]):
                 self._model.train()
                 try:
                     data, _, _, _ = next(iterator_train)

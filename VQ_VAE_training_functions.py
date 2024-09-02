@@ -125,7 +125,7 @@ class TrainModel:
         for keys in dict:
             wandb.log({keys: dict[keys]})
 
-    def fordward(self, training_loader, test_loader, config):
+    def forward(self, training_loader, test_loader, config):
         #         iterator = iter(test_loader)
         wandb_enable, run_name = self.wandb_init(config)
         optimizer = config["optimizer"]
@@ -178,7 +178,7 @@ class TrainModel:
                     try:
                         test_ = TestModel(self._model, iterator, 8)
                         # torch.save(model.state_dict(),f'model_{epoch}_{i}.pkl')
-                        originals, reconstructions, encodings, test_error = test_.reconstruct()
+                        originals, reconstructions, encodings, label, test_error, path = test_.reconstruct()
                         fig = test_.plot_reconstructions(originals, reconstructions, 8)
                         images = wandb.Image(fig, caption=f"recon_error: {np.round(test_error.item(), 4)}")
                         self.wandb_logging({"examples": images, "step": (i + 1) // period})
