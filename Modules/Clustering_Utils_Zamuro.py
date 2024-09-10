@@ -7,6 +7,7 @@ import matplotlib.cm as cm
 import pandas as pd
 import torch
 import joypy
+from webencodings import LABELS
 
 
 def plot_silhouette(X, cluster_labels, n_clusters, silhouette_avg, method=None, extra=None, save=False):
@@ -114,14 +115,13 @@ def get_row_col(pos, cols):
 
 
 class ClusteringResults:
-    def __init__(self, model, y, y_label="hour", hist_library="plt"):
+    def __init__(self, model, df, y_label="hour", hist_library="plt"):
         self._labels_cluster = None
         self._n_labels = None
         self._label = y_label
         self._model = model
         self._n_clusters = len(set(model.labels_))
-        self.y = y
-        self._y = self.converter(y[self._label])
+        self._y = df
         self._n_labels = set(self._y)
 
     def one_cluster_eval(self, cluster):
@@ -132,33 +132,28 @@ class ClusteringResults:
 
     def tagger(self, samples):
         labels = []
-        joy_vars = ["hour", "recorder"]
+        self._y["cluster"] = self._model.labels_
         for cluster in range(self._n_clusters):
-            y_aux = []
-            labels_cluster = []
-            for i, label in enumerate(joy_vars):
-                y_aux.append(self.converter(self.y[label]))
-                index = np.where(self._model.labels_ == cluster)
-                index = list(index[0])
+            index = np.where(self._model.labels_ == cluster)
+            index = index[0]
             labels.append(samples[index])
-        # return labels
 
-    def joyplot(self):
+    def joyplot(self, joy_vars=None):
+        if joy_vars is None:
+            joy_vars = ["hour", "location"]
         labels_all_clusters = []
         size_x = 8
         size_y = 6
-        joy_vars = ["hour", "recorder"]
+        labels_cluster = []
+        df = pd.DataFrame()
         for cluster in range(self._n_clusters):
-            y_aux = []
-            labels_cluster = []
+            df = pd.DataFrame()
             for i, label in enumerate(joy_vars):
-                y_aux.append(self.converter(self.y[label]))
-                index = np.where(self._model.labels_ == cluster)
-                index = list(index[0])
-                labels_cluster.append(y_aux[i][index])
-            df = pd.DataFrame({'recorder': labels_cluster[0], "hour": labels_cluster[1]})
-            if (self._label == "hour"):
-                joypy.joyplot(df, by="hour", column="recorder", range_style='own',
+                labels_cluster.append(self.tagger(np.asarray(df_ae[label])))
+                df[label] = labels_cluster[i][cluster]
+
+            if (self._label == "location"):
+                joypy.joyplot(df, by="location", column="hour", range_style='own',
                               grid="y", hist=False, linewidth=1, legend=False, figsize=(size_x, size_y),
                               title=f"Cluster {cluster} \nLabels distribution along recorders using recorders as rows",
                               colormap=cm.autumn_r, fade=False)
@@ -171,14 +166,9 @@ class ClusteringResults:
 
             plt.xticks(fontsize=22)
             plt.yticks(fontsize=22)
-            labels_all_clusters.append(index)
             plt.show()
-        #             print(len(labels_cluster))
-        #             print(labels_cluster[1].shape)
-        #             print(labels_cluster[0:10])
-        #             print(index[0:20])
 
-        return labels_all_clusters
+        return labels_cluster
 
     def histograms(self, hist_library="plt", root=None, save=True):
         bins = list(self._n_labels)
