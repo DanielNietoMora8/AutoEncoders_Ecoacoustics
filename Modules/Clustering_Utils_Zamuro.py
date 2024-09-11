@@ -105,7 +105,7 @@ def plot_centroids(cluster_centers, model, method, extra="", save=True):
 def num_rows_cols(num_elements):
     num_rows = int(np.sqrt(num_elements))
     num_cols = (num_elements + num_rows - 1) // num_rows
-    return (num_rows, num_cols)
+    return num_rows, num_cols
 
 
 def get_row_col(pos, cols):
@@ -122,13 +122,13 @@ class ClusteringResults:
         self._model = model
         self._n_clusters = len(set(model.labels_))
         self._y = df
-        self._n_labels = set(self._y)
+        self._n_labels = set(list(self._y.loc[:, self._label]))
 
     def one_cluster_eval(self, cluster):
         index = np.where(self._model.labels_ == cluster)
         index = list(index[0])
-        self._labels_cluster = self._y[index]
-        return self._labels_cluster
+        self._labels_cluster = self._y.loc[index, self._label]
+        return list(self._labels_cluster)
 
     def tagger(self, samples):
         labels = []
@@ -137,11 +137,11 @@ class ClusteringResults:
             index = np.where(self._model.labels_ == cluster)
             index = index[0]
             labels.append(samples[index])
+        return labels
 
     def joyplot(self, joy_vars=None):
         if joy_vars is None:
             joy_vars = ["hour", "location"]
-        labels_all_clusters = []
         size_x = 8
         size_y = 6
         labels_cluster = []
@@ -149,7 +149,7 @@ class ClusteringResults:
         for cluster in range(self._n_clusters):
             df = pd.DataFrame()
             for i, label in enumerate(joy_vars):
-                labels_cluster.append(self.tagger(np.asarray(df_ae[label])))
+                labels_cluster.append(self.tagger(np.asarray(self._y[label])))
                 df[label] = labels_cluster[i][cluster]
 
             if (self._label == "location"):
@@ -157,22 +157,12 @@ class ClusteringResults:
                               grid="y", hist=False, linewidth=1, legend=False, figsize=(size_x, size_y),
                               title=f"Cluster {cluster} \nLabels distribution along recorders using recorders as rows",
                               colormap=cm.autumn_r, fade=False)
-
-            elif (self._label == "recorder"):
-                joypy.joyplot(df, by="recorder", column="hour", range_style='own',
-                              grid="y", hist=False, linewidth=1, legend=False, figsize=(size_x, size_y),
-                              title=f"Cluster {cluster} \nLabels distribution along recorders using hours as rows",
-                              colormap=cm.autumn_r)
-
             plt.xticks(fontsize=22)
             plt.yticks(fontsize=22)
             plt.show()
 
-        return labels_cluster
-
     def histograms(self, hist_library="plt", root=None, save=True):
         bins = list(self._n_labels)
-        print(bins)
         num_rows, num_cols = num_rows_cols(self._n_clusters)
         fig, axes = plt.subplots(num_rows, num_cols, figsize=(14, 14))
         if self._n_clusters <= 3:
@@ -193,12 +183,12 @@ class ClusteringResults:
                                       color="paleturquoise", cumulative=False,
                                       edgecolor='black',
                                       linewidth=1.2, bins=bins, stacked=False)
-                axes[ax_0][ax_1].set_title(f"Cluster: {hist}", size=16)
+                axes[ax_0][ax_1].set_title(f"Cluster: {hist + 1}", size=16)
             elif hist_library == "sns":
                 sns.distplot(aux, bins=np.arange(aux.min(), aux.max() + 1),
                              hist_kws=dict(edgecolor="black", linewidth=1),
                              ax=axes[ax_0, ax_1])
-                axes[ax_0][ax_1].set_title(f"Cluster: {hist}", size=16)
+                axes[ax_0][ax_1].set_title(f"Cluster: {hist + 1}", size=16)
             else:
                 raise Exception(f"Library {self._hist_library} unused")
 
