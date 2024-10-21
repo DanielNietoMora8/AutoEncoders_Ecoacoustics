@@ -10,7 +10,8 @@ import joypy
 from webencodings import LABELS
 
 
-def plot_silhouette(X, cluster_labels, n_clusters, silhouette_avg, method=None, extra=None, save=False):
+def plot_silhouette(X, cluster_labels, n_clusters, silhouette_avg, method=None,
+                    extra=None, save=False, root=None):
     fig, ax1 = plt.subplots(figsize=(12, 12))
 
     # The 1st subplot is the silhouette plot
@@ -74,15 +75,21 @@ def plot_silhouette(X, cluster_labels, n_clusters, silhouette_avg, method=None, 
     ax1.set_yticks([])  # Clear the yaxis labels / ticks
     ax1.set_xticks([-1, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0,
                     0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
-    if save:
-        plt.savefig(f"temporal/clustering_results/{method}/Silhouette_plot_{n_clusters}_{extra}.pdf", format="pdf")
+
+    if not extra:
+        extra= ""
+    else:
+        pass
+
+    if save and root is not None:
+        plt.savefig(f"{root}/Silhouette_plot_{n_clusters}_{extra}.pdf", format="pdf")
         plt.show()
     else:
         print("Ploted!")
         pass
 
 
-def plot_centroids(cluster_centers, model, method, extra="", save=True):
+def plot_centroids(cluster_centers, model, extra=None, save=True, root=None):
     plt.figure(figsize=(18, 18))
     model._model.to("cpu")
     for i, spec in enumerate(cluster_centers):
@@ -94,12 +101,17 @@ def plot_centroids(cluster_centers, model, method, extra="", save=True):
         plt.xticks(())
         plt.yticks(())
     n_cluster = len(cluster_centers)
-    if save == True:
-        plt.savefig(f"temporal/clustering_results/{method}/Centroids_plot_{n_cluster}_{extra}.pdf", format="pdf")
+
+    if not extra:
+        extra= ""
+    else:
+        pass
+    if save and root is not None:
+        plt.savefig(f"{root}/Centroids_plot_{n_cluster}_{extra}.pdf", format="pdf")
         plt.show()
     else:
+        plt.show()
         print("Ploted!")
-        pass
 
 
 def num_rows_cols(num_elements):
@@ -161,10 +173,14 @@ class ClusteringResults:
             plt.yticks(fontsize=22)
             plt.show()
 
-    def histograms(self, hist_library="plt", root=None, save=True):
+    def histograms(self, hist_library="plt", extra=None, root=None, save=True):
         bins = list(self._n_labels)
         num_rows, num_cols = num_rows_cols(self._n_clusters)
         fig, axes = plt.subplots(num_rows, num_cols, figsize=(14, 14))
+        if not extra:
+            extra = ""
+        else:
+            pass
         if self._n_clusters <= 3:
             axes = np.expand_dims(axes, 0)
             fig.set_figheight(6)
@@ -193,7 +209,7 @@ class ClusteringResults:
                 raise Exception(f"Library {self._hist_library} unused")
 
             if (root is not None) & (save is True):
-                plt.savefig(f"{root}/Histograms_plot_{self._n_clusters}.pdf", format="pdf")
+                plt.savefig(f"{root}/Histograms_plot_{self._n_clusters}_{extra}.pdf", format="pdf")
             else:
                 pass
         plt.show()
