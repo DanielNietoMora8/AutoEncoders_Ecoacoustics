@@ -49,7 +49,7 @@ def plot_silhouette(X, cluster_labels, n_clusters, silhouette_avg, method=None,
         size_cluster_i = ith_cluster_silhouette_values.shape[0]
         y_upper = y_lower + size_cluster_i
 
-        color = cm.nipy_spectral(float(i) / n_clusters)
+        color = cm.inferno(float(i) / n_clusters)
         ax1.fill_betweenx(
             np.arange(y_lower, y_upper),
             0,
