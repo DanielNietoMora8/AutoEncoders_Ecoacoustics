@@ -142,14 +142,14 @@ class ClusteringResults:
         self._labels_cluster = self._y.loc[index, self._label]
         return list(self._labels_cluster)
 
-    def tagger(self, samples):
+    def tagger(self):
         labels = []
         self._y["cluster"] = self._model.labels_
-        for cluster in range(self._n_clusters):
-            index = np.where(self._model.labels_ == cluster)
-            index = index[0]
-            labels.append(samples[index])
-        return labels
+        # for cluster in range(self._n_clusters):
+        #     index = np.where(self._model.labels_ == cluster)
+        #     index = index[0]
+        #     labels.append(samples[index])
+        return self._y
 
     def joyplot(self, joy_vars=None):
         if joy_vars is None:
