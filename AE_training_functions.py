@@ -32,6 +32,7 @@ class TestModel:
         self.iterator = iterator
         self.num_views = num_views
         self.device = device
+        self.loss_history = {}
 
     def save_waveform(self, waveform, path):
         """Guarda un waveform como archivo WAV."""
@@ -75,7 +76,7 @@ class TestModel:
         combined = torch.cat((originals[:self.num_views], reconstructions[:self.num_views]), 0)
         grid = make_grid(combined, nrow=self.num_views, pad_value=20)
         fig, ax = plt.subplots(figsize=(20, 5))
-        ax.imshow(librosa.power_to_db(grid[1].cpu()), origin="lower", aspect='auto')
+        ax.imshow(librosa.power_to_db(grid[1].cpu()), origin="lower")
         ax.axis("off")
         plt.show()
         return fig
@@ -140,6 +141,8 @@ class TrainModel:
         """Inicializa wandb para monitoreo del entrenamiento."""
         run_name = config.get("architecture", "model") + "_"
         run_name += "_".join(f"{key}_{config.get(key, 'NA')}" for key in keys)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        run_name += f"_run_{timestamp}"
 
         try:
             wandb.login()
@@ -194,6 +197,23 @@ class TrainModel:
                 f"{mode}/recon_loss": loss.item(),
                 "step": step
             })
+
+            # # === Guardar métricas localmente ===
+            # time_now = datetime.datetime.now()
+            # folder_name = f'temporal_zamuro/models/New_paper/model_{wandb.run.name}'
+            # os.makedirs(folder_name, exist_ok=True)
+            #
+            # metrics = {
+            #     "mode": mode,
+            #     "step": step,
+            #     "loss": loss.item(),
+            #     "timestamp": time_now.isoformat()
+            # }
+            #
+            # save_path = os.path.join(folder_name, f"{mode}_metric_step_{step}.pt")
+            # torch.save(metrics, save_path)
+            # print(f"{mode.capitalize()} metrics saved to {save_path}")
+
         except Exception as e:
             print(f"Error logging {mode} reconstructions: {e}")
 
@@ -203,27 +223,40 @@ class TrainModel:
         scheduler = config["scheduler"]
         logs = []
 
+        self.loss_history = {}  # Inicializar estructura para guardar pérdidas por época
+
         for epoch in range(config["num_epochs"]):
             train_iter = iter(training_loader)
             test_iter = iter(test_loader)
+            self.loss_history[epoch] = {"train": [], "test": []}  # Inicializar pérdidas para esta época
 
             for step in range(config["num_training_updates"]):
                 try:
                     data, *_ = next(train_iter)
+                    step_count = step + epoch * config["num_training_updates"]
+
+                    # === Entrenamiento ===
                     loss = self.train_one_step(data, optimizer)
                     print(
                         f"Epoch {epoch + 1}/{config['num_epochs']} - Step {step + 1}/{config['num_training_updates']} - Loss: {loss:.4f}")
-                    self.wandb_log({"train/loss": loss, "step": step + epoch * config["num_training_updates"]})
+                    self.loss_history[epoch]["train"].append(loss)
+                    self.wandb_log({"train/loss": loss, "step": step_count})
 
-                    if wandb_enabled and (step + 1) % 50 == 0:
-                        recon_step = (step + 1) // 50
+                    # === Evaluación con test ===
+                    if wandb_enabled:
+                        test_iter_temp = iter(test_loader)
+                        test_instance = TestModel(self.model, test_iter_temp, num_views=8, device=self.device)
+                        _, _, _, _, test_loss, _ = test_instance.reconstruct()
+                        test_loss_value = test_loss.item()
+                        self.loss_history[epoch]["test"].append(test_loss_value)
+                        self.wandb_log({"test/loss": test_loss_value, "step": step_count})
 
-                        # Log test reconstructions
-                        self.log_reconstructions(self.model, test_iter, recon_step, mode="test")
-
-                        # Log train reconstructions using a fresh iterator to avoid state issues
-                        train_iter_temp = iter(training_loader)
-                        self.log_reconstructions(self.model, train_iter_temp, recon_step, mode="train")
+                        # === Cada 50 pasos: log de reconstrucciones ===
+                        if (step + 1) % 50 == 0:
+                            recon_step = step // 50
+                            self.log_reconstructions(self.model, test_iter, recon_step, mode="test")
+                            train_iter_temp = iter(training_loader)
+                            self.log_reconstructions(self.model, train_iter_temp, recon_step, mode="train")
 
                 except Exception as e:
                     print(f"Training step failed: {e}")
@@ -232,6 +265,14 @@ class TrainModel:
             scheduler.step()
             torch.cuda.empty_cache()
             self._save_model(epoch, run_name)
+
+            # === Guardar historia de pérdidas por época ===
+            loss_save_dir = os.path.join("temporal_zamuro", "models", "New_paper")
+            os.makedirs(loss_save_dir, exist_ok=True)
+            loss_save_path = os.path.join(loss_save_dir, f"loss_history_{run_name}.pt")
+            torch.save(self.loss_history, loss_save_path)
+            print(f"Saved cumulative loss history to {loss_save_path}")
+
             clear_output(wait=True)
             print(f"Learning rate: {optimizer.state_dict()['param_groups'][0]['lr']}")
 
@@ -242,7 +283,7 @@ class TrainModel:
     def _save_model(self, epoch, run_name):
         """Guarda el modelo actual en una carpeta específica."""
         time = datetime.datetime.now()
-        folder_name = f'model_{run_name}_month_{time.month}'
+        folder_name = f'temporal_zamuro/models/New_paper/model_{run_name}'
         save_dir = os.path.join('temporal_zamuro', 'models', folder_name)
         os.makedirs(save_dir, exist_ok=True)
 
